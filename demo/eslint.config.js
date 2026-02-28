@@ -15,8 +15,8 @@ export default tseslint.config(
       'eg-rules': egRulesPlugin,
     },
     rules: {
-      'eg-rules/example-rule': 'error',
       'eg-rules/api-type-suffix': 'error',
+      'eg-rules/component-callback-naming': 'error',
     },
   }
 );

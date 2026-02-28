@@ -1,17 +1,17 @@
-import exampleRule from './rules/example-rule';
 import apiTypeSuffix from './rules/api-type-suffix';
+import componentCallbackNaming from './rules/component-callback-naming';
 
 export const rules = {
-  'example-rule': exampleRule,
   'api-type-suffix': apiTypeSuffix,
+  'component-callback-naming': componentCallbackNaming,
 };
 
 export const configs = {
   recommended: {
     plugins: ['eg-rules'],
     rules: {
-      'eg-rules/example-rule': 'error',
       'eg-rules/api-type-suffix': 'error',
+      'eg-rules/component-callback-naming': 'error',
     },
   },
 };
