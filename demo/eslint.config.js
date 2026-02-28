@@ -17,6 +17,7 @@ export default tseslint.config(
     rules: {
       'eg-rules/api-type-suffix': 'error',
       'eg-rules/component-callback-naming': 'error',
+      'eg-rules/jsx-event-handler-naming': 'error',
     },
   }
 );
