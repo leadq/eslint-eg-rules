@@ -56,9 +56,25 @@ Before writing any implementation code:
 5. Verify that the rule triggers correctly by manually running the lint script in the demo project (e.g., `npx eslint "src/**"`) or by checking the IDE integration.
 6. **Note**: Ensure the demo's ESLint config isolates the custom plugin setup without interference from conflicting rules.
 
+### Step 6: Update Project-Level Documentation (MANDATORY)
+After every new rule is created **or** an existing rule is modified, you **MUST** update the following two files:
+
+1. **`README.md`** (root of the project):
+   - Add or update the rule's entry in the rules table (rule name, description, fixable status, recommended status).
+   - If the rule has new or changed options, reflect them in the relevant documentation section.
+   - If the rule is being removed or renamed, remove or update its entry accordingly.
+
+2. **`eslint-eg-rules.skill.md`** (project skill file, if it exists at the root or in `.agent/`):
+   - Add or update the rule's summary so that the skill file always reflects the current set of rules and their behaviors.
+   - Include the rule name, a one-line description, and any notable options or exceptions.
+   - Keep the skill file in sync so that future LLM sessions have accurate context about the plugin's capabilities.
+
+> ⚠️ **This step is not optional.** Skipping or deferring this step is a violation of the workflow. Do not mark a task as complete until both files are updated.
+
 ## 3. General Rules & Constraints
 - **Test/Doc Synchronization**: If the user provides documentation first, generate tests + code. If the user provides tests first, generate documentation + code. ALWAYS keep documentation, tests, and the demo project examples in sync.
 - **Refactoring**: When modifying a rule, you MUST update unit tests, `src/index.ts` (if renaming), the documentation, and the demo examples.
+- **Project Documentation Sync**: Every time a rule is created or updated, you MUST update both the root `README.md` (rules table and options) and the `eslint-eg-rules.skill.md` skill file (rule summaries). See **Step 6** for details. This is mandatory and must be completed before the task is considered done.
 - **Robustness**: Don't rely exclusively on node names if type resolution is necessary. Check all variants of a construct (e.g., function expressions vs declarations).
 - **TypeScript AST**: If writing TypeScript rules, be sure to use `@typescript-eslint/utils` and account for nodes like `TSTypeAnnotation`, `TSInterfaceDeclaration`, etc.
 - **Language**: Use only English for all documentation and error messages. But you can speak in Turkish in Chat mode.
