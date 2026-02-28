@@ -4,6 +4,7 @@ import jsxEventHandlerNaming from './rules/jsx-event-handler-naming';
 import functionsNaming from './rules/functions-naming';
 import booleanPropNaming from './rules/boolean-prop-naming';
 import testStatementMatch from './rules/test-statement-match';
+import { reactComponentLayoutRule } from './rules/react-component-layout';
 
 export const rules = {
   'api-type-suffix': apiTypeSuffix,
@@ -12,6 +13,7 @@ export const rules = {
   'functions-naming': functionsNaming,
   'boolean-prop-naming': booleanPropNaming,
   'test-statement-match': testStatementMatch,
+  'react-component-layout': reactComponentLayoutRule,
 };
 
 export const configs = {
@@ -24,6 +26,7 @@ export const configs = {
       'eg-rules/functions-naming': 'error',
       'eg-rules/boolean-prop-naming': 'error',
       'eg-rules/test-statement-match': 'error',
+      'eg-rules/react-component-layout': 'warn',
     },
   },
 };
