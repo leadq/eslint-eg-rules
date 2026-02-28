@@ -1,0 +1,29 @@
+{
+  "name": "eslint-plugin-eg-rules",
+  "version": "1.0.0",
+  "description": "Custom ESLint rules for frontend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin"
+  ],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.2",
+    "@typescript-eslint/parser": "^8.56.1",
+    "@typescript-eslint/rule-tester": "^8.56.1",
+    "@typescript-eslint/utils": "^8.56.1",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
