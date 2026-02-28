@@ -19,6 +19,7 @@ export default tseslint.config(
       'eg-rules/component-callback-naming': 'error',
       'eg-rules/jsx-event-handler-naming': 'error',
       'eg-rules/functions-naming': 'error',
+      'eg-rules/boolean-prop-naming': 'error',
     },
   }
 );
