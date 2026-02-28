@@ -3,6 +3,7 @@ import componentCallbackNaming from './rules/component-callback-naming';
 import jsxEventHandlerNaming from './rules/jsx-event-handler-naming';
 import functionsNaming from './rules/functions-naming';
 import booleanPropNaming from './rules/boolean-prop-naming';
+import testStatementMatch from './rules/test-statement-match';
 
 export const rules = {
   'api-type-suffix': apiTypeSuffix,
@@ -10,6 +11,7 @@ export const rules = {
   'jsx-event-handler-naming': jsxEventHandlerNaming,
   'functions-naming': functionsNaming,
   'boolean-prop-naming': booleanPropNaming,
+  'test-statement-match': testStatementMatch,
 };
 
 export const configs = {
@@ -21,6 +23,7 @@ export const configs = {
       'eg-rules/jsx-event-handler-naming': 'error',
       'eg-rules/functions-naming': 'error',
       'eg-rules/boolean-prop-naming': 'error',
+      'eg-rules/test-statement-match': 'error',
     },
   },
 };

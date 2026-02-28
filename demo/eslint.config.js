@@ -20,6 +20,7 @@ export default tseslint.config(
       'eg-rules/jsx-event-handler-naming': 'error',
       'eg-rules/functions-naming': 'error',
       'eg-rules/boolean-prop-naming': 'error',
+      'eg-rules/test-statement-match': 'error',
     },
   }
 );
