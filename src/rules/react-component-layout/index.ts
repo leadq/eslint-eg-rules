@@ -1,15 +1,5 @@
 import { Rule } from 'eslint';
-import {
-  Node,
-  CallExpression,
-  Identifier,
-  ReturnStatement,
-  IfStatement,
-  VariableDeclaration,
-  FunctionDeclaration,
-  ExpressionStatement,
-} from 'estree';
-import { TSESTree } from '@typescript-eslint/utils';
+import { Node } from 'estree';
 
 export const reactComponentLayoutRule: Rule.RuleModule = {
   meta: {
@@ -33,15 +23,31 @@ export const reactComponentLayoutRule: Rule.RuleModule = {
   create(context) {
     const sourceCode = context.sourceCode || context.getSourceCode();
 
+    function getClosestFunction(node: any) {
+      let curr = node.parent;
+      while (curr) {
+        if (
+          curr.type === 'FunctionDeclaration' ||
+          curr.type === 'ArrowFunctionExpression' ||
+          curr.type === 'FunctionExpression'
+        ) {
+          return curr;
+        }
+        curr = curr.parent;
+      }
+      return null;
+    }
+
     function isInsideJSXOrReturn(node: Node, rootNode: Node): boolean {
       let curr: any = node;
       while (curr && curr !== rootNode) {
-        if (
-          curr.type === 'JSXElement' ||
-          curr.type === 'JSXFragment' ||
-          curr.type === 'ReturnStatement'
-        ) {
+        if (curr.type === 'JSXElement' || curr.type === 'JSXFragment') {
           return true;
+        }
+        if (curr.type === 'ReturnStatement') {
+          if (getClosestFunction(curr) === rootNode) {
+            return true;
+          }
         }
         curr = curr.parent;
       }
@@ -86,25 +92,31 @@ export const reactComponentLayoutRule: Rule.RuleModule = {
         return false;
       }
 
-      let returnsJSX = false;
-      if (node.body && node.body.type === 'BlockStatement') {
-        const returnStmts = node.body.body.filter((stmt: any) => stmt.type === 'ReturnStatement');
-        for (const stmt of returnStmts) {
-          if (stmt.argument) {
-            if (stmt.argument.type === 'JSXElement' || stmt.argument.type === 'JSXFragment') {
-              returnsJSX = true;
-              break;
-            }
-            if (
-              stmt.argument.type === 'ParenthesizedExpression' &&
-              (stmt.argument.expression.type === 'JSXElement' ||
-                stmt.argument.expression.type === 'JSXFragment')
-            ) {
-              returnsJSX = true;
-              break;
-            }
+      function hasJSXReturn(stmt: any): boolean {
+        if (!stmt) return false;
+        if (stmt.type === 'ReturnStatement' && stmt.argument) {
+          if (stmt.argument.type === 'JSXElement' || stmt.argument.type === 'JSXFragment')
+            return true;
+          if (
+            stmt.argument.type === 'ParenthesizedExpression' &&
+            (stmt.argument.expression.type === 'JSXElement' ||
+              stmt.argument.expression.type === 'JSXFragment')
+          ) {
+            return true;
           }
         }
+        if (stmt.type === 'BlockStatement') {
+          return stmt.body.some(hasJSXReturn);
+        }
+        if (stmt.type === 'IfStatement') {
+          return hasJSXReturn(stmt.consequent) || hasJSXReturn(stmt.alternate);
+        }
+        return false;
+      }
+
+      let returnsJSX = false;
+      if (node.body && node.body.type === 'BlockStatement') {
+        returnsJSX = hasJSXReturn(node.body);
       } else if (
         node.body &&
         (node.body.type === 'JSXElement' ||
@@ -235,7 +247,6 @@ export const reactComponentLayoutRule: Rule.RuleModule = {
           if (group === -1) {
             // Treat dependency values as completely transparent.
             // They don't enforce order against anything.
-            previousGroup = group;
             continue;
           }
 
@@ -271,9 +282,30 @@ export const reactComponentLayoutRule: Rule.RuleModule = {
                 prev_group: GROUP_NAMES[maxGroup],
               },
               fix(fixer) {
-                if (!maxGroupNode) return null; // Safety fallback
-                // Auto-fix layout: Swap positions using raw text
                 const stmtText = sourceCode.getText(stmt as any);
+                let insertBeforeNode: any = null;
+                for (const s of statements) {
+                  if (s === stmt) break;
+                  const { group: sGroup } = categorizeStatement(s, node);
+                  if (
+                    sGroup !== -1 &&
+                    sGroup > group &&
+                    !((group === 9 && sGroup === 10) || (group === 10 && sGroup === 9))
+                  ) {
+                    insertBeforeNode = s;
+                    break;
+                  }
+                }
+
+                if (insertBeforeNode) {
+                  return [
+                    fixer.remove(stmt as any),
+                    fixer.insertTextBefore(insertBeforeNode, stmtText + '\n'),
+                  ];
+                }
+
+                // Safety fallback
+                if (!maxGroupNode) return null;
                 return [
                   fixer.remove(stmt as any),
                   fixer.insertTextBefore(maxGroupNode, stmtText + '\n'),

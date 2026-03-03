@@ -86,6 +86,14 @@ ruleTester.run('react-component-layout', reactComponentLayoutRule as any, {
           return <div></div>;
         };
       `,
+      output: `
+        const Comp = () => {
+          const location = useLocation();
+const [count, setCount] = useState(0); // 3
+           // 1
+          return <div></div>;
+        };
+      `,
       errors: [{ messageId: 'order' }],
     },
     {
@@ -97,6 +105,15 @@ ruleTester.run('react-component-layout', reactComponentLayoutRule as any, {
           return <div></div>;
         };
       `,
+      output: `
+        const Comp = () => {
+          const [count, setCount] = useState(0); // 3
+          const [state, setState] = useState(1);
+const { data } = useQuery(); // 4
+           // 3
+          return <div></div>;
+        };
+      `,
       errors: [{ messageId: 'contiguous' }, { messageId: 'order' }],
     },
     {
@@ -104,6 +121,14 @@ ruleTester.run('react-component-layout', reactComponentLayoutRule as any, {
         const Comp = () => {
           const onSave = () => {}; // 8
           const formatText = () => {}; // 7
+          return <div></div>;
+        };
+      `,
+      output: `
+        const Comp = () => {
+          const formatText = () => {};
+const onSave = () => {}; // 8
+           // 7
           return <div></div>;
         };
       `,
@@ -122,6 +147,18 @@ ruleTester.run('react-component-layout', reactComponentLayoutRule as any, {
           return <div onClick={handleCheck}></div>;
         };
       `,
+      output: `
+        const Comp = () => {
+          const [count, setCount] = useState(0); // 3
+          
+          const { data } = useQuery();
+const handleCheck = () => { console.log("check"); }; // 8
+          
+           // 4 (Query hook cannot be after handler)
+          
+          return <div onClick={handleCheck}></div>;
+        };
+      `,
       errors: [{ messageId: 'order' }],
     },
     {
@@ -130,6 +167,15 @@ ruleTester.run('react-component-layout', reactComponentLayoutRule as any, {
            const formatStr = () => {}; // 7
            const onClick = () => {}; // 8
            const calculate = () => {}; // 7 (Utility after Handler is an order error! Wait no, 7 after 8 is order error but also contiguous error might be triggered if previously 7 was seen!)
+           return <div></div>;
+        }
+      `,
+      output: `
+        const Comp = () => {
+           const formatStr = () => {}; // 7
+           const calculate = () => {};
+const onClick = () => {}; // 8
+            // 7 (Utility after Handler is an order error! Wait no, 7 after 8 is order error but also contiguous error might be triggered if previously 7 was seen!)
            return <div></div>;
         }
       `,
