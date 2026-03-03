@@ -5,6 +5,7 @@ import functionsNaming from './rules/functions-naming';
 import booleanPropNaming from './rules/boolean-prop-naming';
 import testStatementMatch from './rules/test-statement-match';
 import { reactComponentLayoutRule } from './rules/react-component-layout';
+import noTestAttrs from './rules/no-test-attrs';
 
 export const rules = {
   'api-type-suffix': apiTypeSuffix,
@@ -14,6 +15,7 @@ export const rules = {
   'boolean-prop-naming': booleanPropNaming,
   'test-statement-match': testStatementMatch,
   'react-component-layout': reactComponentLayoutRule,
+  'no-test-attrs': noTestAttrs,
 };
 
 export const configs = {
@@ -27,6 +29,7 @@ export const configs = {
       'eg-rules/boolean-prop-naming': 'error',
       'eg-rules/test-statement-match': 'error',
       'eg-rules/react-component-layout': 'warn',
+      'eg-rules/no-test-attrs': 'error',
     },
   },
 };

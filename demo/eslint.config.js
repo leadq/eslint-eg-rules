@@ -22,6 +22,7 @@ export default tseslint.config(
       'eg-rules/boolean-prop-naming': 'error',
       'eg-rules/test-statement-match': 'error',
       'eg-rules/react-component-layout': 'error',
+      'eg-rules/no-test-attrs': 'error',
     },
   }
 );

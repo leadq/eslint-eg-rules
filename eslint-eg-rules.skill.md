@@ -160,3 +160,18 @@ test('returns the user when id is valid', () => {});
 it('returns null', () => {});                  // missing 'should'
 test('returns the user for valid id', () => {}); // no conjunction
 ```
+
+---
+
+## 8. `no-test-attrs` — Disallow Test Attributes
+
+Disallow the use of test-only attributes (e.g. `data-testid`, `data-cy`) inside regular source files like components or utilities. These attributes are only permitted inside test files (e.g. `.test.ts`, `.spec.tsx`) and the `__tests__` directory.
+
+```tsx
+// ✅ (inside a .test.tsx file)
+<button data-testid="submit-btn" />
+
+// ❌ (inside a regular component file e.g. Button.tsx)
+<button data-testid="submit-btn" />
+<div data-cy="container" />
+```

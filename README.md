@@ -12,6 +12,7 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
   - [component-callback-naming](#component-callback-naming)
   - [functions-naming](#functions-naming)
   - [jsx-event-handler-naming](#jsx-event-handler-naming)
+  - [no-test-attrs](#no-test-attrs)
   - [react-component-layout](#react-component-layout)
   - [test-statement-match](#test-statement-match)
 - [Development](#development)
@@ -230,6 +231,37 @@ const handleSubmit = () => {};
 
 ---
 
+### `no-test-attrs`
+
+Disallow test-only attributes (e.g. `data-testid`, `data-cy`) in non-test source files. These attributes should only appear in test files or test mocks.
+
+- **Default forbidden attributes:** `data-testid`, `data-test`, `data-test-id`, `data-cy`, `data-e2e`
+- Automatically ignores files ending with `.test.*`, `.spec.*`, or inside `__tests__/`
+
+```tsx
+// ✅ Valid (in any file)
+<div className="card" id="main" />
+
+// ✅ Valid (inside a test file like Button.test.tsx)
+<button data-testid="submit-btn" type="submit" />
+
+// ❌ Invalid (inside a normal component like Button.tsx)
+<button data-testid="submit-btn" type="submit" />
+<input data-cy="email-input" />
+```
+
+**Options:**
+
+```json
+["error", { "attrs": ["data-testid", "data-cy"] }]
+```
+
+| Option  | Type       | Default                                                             | Description                                         |
+|---------|------------|---------------------------------------------------------------------|-----------------------------------------------------|
+| `attrs` | `string[]` | `["data-testid", "data-test", "data-test-id", "data-cy", "data-e2e"]` | List of JSX attribute names considered test-only  |
+
+---
+
 ### `react-component-layout`
 
 Enforces a specific declaration order inside React components. Based on Separation of Concerns (SoC) and MVVM principles. Supports **auto-fix** (`--fix`).
@@ -329,6 +361,7 @@ eslint-eg-rules/
 │   │   ├── component-callback-naming/
 │   │   ├── functions-naming/
 │   │   ├── jsx-event-handler-naming/
+│   │   ├── no-test-attrs/
 │   │   ├── react-component-layout/
 │   │   └── test-statement-match/
 │   └── utils/
