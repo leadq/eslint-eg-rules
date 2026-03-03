@@ -1,3 +1,5 @@
+import { it, test } from 'vitest';
+
 // Proving that "should " is required for `it` blocks
 it('renders the valid component exactly', () => {});
 
