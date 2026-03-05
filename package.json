@@ -1,6 +1,6 @@
 {
-  "name": "eslint-plugin-eg-rules",
-  "version": "1.0.0",
+  "name": "eslint-plugin-strict-eg-rules",
+  "version": "1.0.1",
   "description": "Custom ESLint rules for frontend",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
