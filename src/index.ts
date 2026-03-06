@@ -18,18 +18,28 @@ export const rules = {
   'no-test-attrs': noTestAttrs,
 };
 
-export const configs = {
-  recommended: {
-    plugins: ['eg-rules'],
-    rules: {
-      'eg-rules/api-type-suffix': 'error',
-      'eg-rules/component-callback-naming': 'error',
-      'eg-rules/jsx-event-handler-naming': 'error',
-      'eg-rules/functions-naming': 'error',
-      'eg-rules/boolean-prop-naming': 'error',
-      'eg-rules/test-statement-match': 'error',
-      'eg-rules/react-component-layout': 'warn',
-      'eg-rules/no-test-attrs': 'error',
-    },
+const legacyRecommended = {
+  plugins: ['eg-rules'],
+  rules: {
+    'eg-rules/api-type-suffix': 'error',
+    'eg-rules/component-callback-naming': 'error',
+    'eg-rules/jsx-event-handler-naming': 'error',
+    'eg-rules/functions-naming': 'error',
+    'eg-rules/boolean-prop-naming': 'error',
+    'eg-rules/test-statement-match': 'error',
+    'eg-rules/react-component-layout': 'warn',
+    'eg-rules/no-test-attrs': 'error',
   },
+};
+
+const flatRecommended = {
+  plugins: {
+    'eg-rules': { rules },
+  },
+  rules: legacyRecommended.rules,
+};
+
+export const configs = {
+  recommended: legacyRecommended,
+  'flat/recommended': flatRecommended,
 };
