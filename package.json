@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-strict-eg-rulez",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Custom ESLint rules for frontend",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +22,7 @@
     "@types/node": "^25.3.2",
     "@typescript-eslint/parser": "^8.56.1",
     "@typescript-eslint/rule-tester": "^8.56.1",
-    "eslint": "^9.39.3",
+    "eslint": "^8.57.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
@@ -30,6 +30,6 @@
     "dist"
   ],
   "dependencies": {
-    "@typescript-eslint/utils": "^8.56.1"
+    "@typescript-eslint/utils": "^7.18.0"
   }
 }
