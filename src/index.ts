@@ -32,14 +32,6 @@ const legacyRecommended = {
   },
 };
 
-const flatRecommended = {
-  plugins: {
-    'eg-rules': { rules },
-  },
-  rules: legacyRecommended.rules,
-};
-
 export const configs = {
   recommended: legacyRecommended,
-  'flat/recommended': flatRecommended,
 };
