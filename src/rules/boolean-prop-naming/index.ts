@@ -4,7 +4,23 @@ import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 type MessageIds = 'missingPrefix';
 type Options = [{ prefixes?: string[] }];
 
-const defaultPrefixes = ['is', 'has', 'can', 'should', 'will', 'did', 'show', 'hide'];
+const defaultPrefixes = [
+  'is',
+  'are',
+  'was',
+  'were',
+  'has',
+  'have',
+  'had',
+  'can',
+  'could',
+  'should',
+  'would',
+  'will',
+  'did',
+  'do',
+  'does',
+];
 
 function hasBooleanPrefix(name: string, prefixes: string[]): boolean {
   // Allow "is", "isReady" but not "isolate" where the next character is not capitalized.
