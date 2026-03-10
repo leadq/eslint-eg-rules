@@ -8,13 +8,11 @@ RuleTester.describe = describe;
 RuleTester.it = it;
 
 const ruleTester = new RuleTester({
-  languageOptions: {
-    parser: parser as any,
+  parser: parser as any,
+  parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    parserOptions: {
-      ecmaFeatures: { jsx: true },
-    },
+    ecmaFeatures: { jsx: true },
   },
 });
 

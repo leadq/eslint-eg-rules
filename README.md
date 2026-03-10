@@ -1,4 +1,4 @@
-# eslint-plugin-eg-rules
+# eslint-plugin-strict-eg-rulez
 
 A collection of custom ESLint rules for React + TypeScript projects. Designed to enforce consistency, readability, and maintainability across frontend codebases.
 
@@ -24,7 +24,7 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
 ## Installation
 
 ```bash
-npm install eslint-plugin-eg-rules --save-dev
+npm install eslint-plugin-strict-eg-rulez --save-dev
 ```
 
 > **Peer dependency:** ESLint `>=8.0.0` is required.
@@ -33,38 +33,29 @@ npm install eslint-plugin-eg-rules --save-dev
 
 ## Usage
 
-`eslint.config.mjs` (ESLint Flat Config):
+`.eslintrc.cjs` or `.eslintrc.json` (Legacy Config):
 
-```js
-import egRules from 'eslint-plugin-eg-rules';
+Using the recommended config:
 
-export default [
-  {
-    plugins: {
-      'eg-rules': egRules,
-    },
-    rules: {
-      ...egRules.configs.recommended.rules,
-    },
-  },
-];
+```json
+{
+  "plugins": ["strict-eg-rulez"],
+  "extends": [
+    "plugin:strict-eg-rulez/recommended"
+  ]
+}
 ```
 
 Or configure rules individually:
 
-```js
-import egRules from 'eslint-plugin-eg-rules';
-
-export default [
-  {
-    plugins: { 'eg-rules': egRules },
-    rules: {
-      'eg-rules/api-type-suffix': 'error',
-      'eg-rules/boolean-prop-naming': 'warn',
-      // ...
-    },
-  },
-];
+```json
+{
+  "plugins": ["strict-eg-rulez"],
+  "rules": {
+    "strict-eg-rulez/api-type-suffix": "error",
+    "strict-eg-rulez/boolean-prop-naming": "warn"
+  }
+}
 ```
 
 ---
@@ -442,7 +433,7 @@ npm run lint
      recommended: {
        rules: {
          // ...
-         'eg-rules/my-new-rule': 'error',
+         'strict-eg-rulez/my-new-rule': 'error',
        },
      },
    };

@@ -19,16 +19,16 @@ export const rules = {
 };
 
 const legacyRecommended = {
-  plugins: ['eg-rules'],
+  plugins: ['strict-eg-rulez'],
   rules: {
-    'eg-rules/api-type-suffix': 'error',
-    'eg-rules/component-callback-naming': 'error',
-    'eg-rules/jsx-event-handler-naming': 'error',
-    'eg-rules/functions-naming': 'error',
-    'eg-rules/boolean-prop-naming': 'error',
-    'eg-rules/test-statement-match': 'error',
-    'eg-rules/react-component-layout': 'warn',
-    'eg-rules/no-test-attrs': 'error',
+    'strict-eg-rulez/api-type-suffix': 'error',
+    'strict-eg-rulez/component-callback-naming': 'error',
+    'strict-eg-rulez/jsx-event-handler-naming': 'error',
+    'strict-eg-rulez/functions-naming': 'error',
+    'strict-eg-rulez/boolean-prop-naming': 'error',
+    'strict-eg-rulez/test-statement-match': 'error',
+    'strict-eg-rulez/react-component-layout': 'warn',
+    'strict-eg-rulez/no-test-attrs': 'error',
   },
 };
 
