@@ -175,3 +175,20 @@ Disallow the use of test-only attributes (e.g. `data-testid`, `data-cy`) inside 
 <button data-testid="submit-btn" />
 <div data-cy="container" />
 ```
+
+---
+
+## 9. `react-bem-naming` — React Component BEM Classes
+
+Enforces BEM naming methodology for React component class names natively or with CSS modules.
+
+- Modes: `kebab-case`, `camelCase`, `strict`.
+- Strict mode strictly enforces the `block` name to match the parent React component and strictly permits BEM nested element chaining inside CSS Modules.
+
+```tsx
+// ✅ (strict mode)
+const SortableHeaderCell = () => <th className={styles.sortableHeaderCell__content--active} />;
+
+// ❌ (strict mode: block doesn't match React component Name)
+const SortableHeaderCell = () => <th className={styles.table__th} />;
+```

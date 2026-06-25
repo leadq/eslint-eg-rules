@@ -22,7 +22,7 @@ When you are asked to create, refactor, or test an ESLint rule in this project, 
 ### Step 1: Analysis & Test-Driven Development (TDD)
 Before writing any implementation code:
 1. **Understand the Goal**: Identify what code patterns are valid and invalid. Consider false positives/negatives and edge cases.
-2. **Draft AST Targets**: Figure out which AST nodes need to be visited (e.g., `FunctionDeclaration`, `ArrowFunctionExpression`, `VariableDeclarator`, `JSXElement`, `CallExpression`, `Identifier`, etc.). Always account for multiple ways to write the same logic (e.g., standard functions vs. arrow functions).
+2. **Draft AST Targets**: Figure out which AST nodes need to be visited (e.g., `FunctionDeclaration`, `ArrowFunctionExpression`, `VariableDeclarator`, `JSXElement`, `CallExpression`, `Identifier`, etc.). Think about all definition types and expression types of same target. Always account for multiple ways to write the same logic (e.g., standard functions vs. arrow functions).
 3. **Write Tests First**: Create `valid` and `invalid` cases using ESLint's `RuleTester` in the rule's test file.
    - The `invalid` cases MUST clearly define the expected `errors` (using `messageId` or exact `message`).
    - Include edge case tests explicitly.

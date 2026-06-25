@@ -13,6 +13,7 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
   - [functions-naming](#functions-naming)
   - [jsx-event-handler-naming](#jsx-event-handler-naming)
   - [no-test-attrs](#no-test-attrs)
+  - [react-bem-naming](#react-bem-naming)
   - [react-component-layout](#react-component-layout)
   - [test-statement-match](#test-statement-match)
 - [Development](#development)
@@ -250,6 +251,34 @@ Disallow test-only attributes (e.g. `data-testid`, `data-cy`) in non-test source
 | Option  | Type       | Default                                                             | Description                                         |
 |---------|------------|---------------------------------------------------------------------|-----------------------------------------------------|
 | `attrs` | `string[]` | `["data-testid", "data-test", "data-test-id", "data-cy", "data-e2e"]` | List of JSX attribute names considered test-only  |
+
+---
+
+### `react-bem-naming`
+
+Enforces BEM naming methodology for React component class names, with strict checking for camelCase, kebab-case, or nested parent component names (`strict` mode).
+
+- Supports `kebab-case`, `camelCase`, and `strict` modes.
+- Strict mode forces `block` names to match the parent React component.
+- Flags structural bad BEM practices (e.g. `___` or nesting elements like `block__el1__el2`).
+
+```tsx
+// ✅ Valid (strict mode)
+const SortableHeaderCell = () => <th className={styles.sortableHeaderCell__content--active} />;
+
+// ❌ Invalid (strict mode: root doesn't match component)
+const SortableHeaderCell = () => <th className={styles.table__th} />;
+```
+
+**Options:**
+
+```json
+["error", { "mode": "strict" }]
+```
+
+| Option | Type                                     | Default        | Description                                               |
+|--------|------------------------------------------|----------------|-----------------------------------------------------------|
+| `mode` | `"kebab-case" \| "camelCase" \| "strict"` | `"kebab-case"` | The naming convention required for BEM blocks/elements   |
 
 ---
 

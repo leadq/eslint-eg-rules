@@ -23,4 +23,24 @@ module.exports = {
     'strict-eg-rulez/react-component-layout': 'error',
     'strict-eg-rulez/no-test-attrs': 'error',
   },
+  overrides: [
+    {
+      files: ['src/components/react-bem-naming/kebab-case/**/*.tsx'],
+      rules: {
+        'strict-eg-rulez/react-bem-naming': ['error', { mode: 'kebab-case' }],
+      },
+    },
+    {
+      files: ['src/components/react-bem-naming/camelCase/**/*.tsx'],
+      rules: {
+        'strict-eg-rulez/react-bem-naming': ['error', { mode: 'camelCase' }],
+      },
+    },
+    {
+      files: ['src/components/react-bem-naming/strict/**/*.tsx'],
+      rules: {
+        'strict-eg-rulez/react-bem-naming': ['error', { mode: 'strict' }],
+      },
+    },
+  ],
 };
