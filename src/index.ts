@@ -20,6 +20,11 @@ export const rules = {
   'react-bem-naming': reactBemNaming,
 };
 
+export const meta = {
+  name: 'eslint-plugin-strict-eg-rulez',
+  version: '2.1.3',
+};
+
 const legacyRecommended = {
   plugins: ['strict-eg-rulez'],
   rules: {
@@ -37,4 +42,11 @@ const legacyRecommended = {
 
 export const configs = {
   recommended: legacyRecommended,
+  'flat/recommended': {
+    plugins: {
+      'strict-eg-rulez': { meta, rules },
+    },
+    rules: legacyRecommended.rules,
+  },
 };
+

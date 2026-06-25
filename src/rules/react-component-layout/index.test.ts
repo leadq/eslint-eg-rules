@@ -1,18 +1,22 @@
-import { RuleTester } from 'eslint';
+import { RuleTester } from '@typescript-eslint/rule-tester';
 import { reactComponentLayoutRule } from './index';
 
 import parser from '@typescript-eslint/parser';
-import { describe, it } from 'vitest';
+import { describe, it, afterAll } from 'vitest';
 
+RuleTester.afterAll = afterAll;
 RuleTester.describe = describe;
 RuleTester.it = it;
+RuleTester.itOnly = it.only;
 
 const ruleTester = new RuleTester({
-  parser: parser as any,
-  parserOptions: {
-    ecmaVersion: 2020,
-    sourceType: 'module',
-    ecmaFeatures: { jsx: true },
+  languageOptions: {
+    parser,
+    parserOptions: {
+      ecmaVersion: 2020,
+      sourceType: 'module',
+      ecmaFeatures: { jsx: true },
+    },
   },
 });
 

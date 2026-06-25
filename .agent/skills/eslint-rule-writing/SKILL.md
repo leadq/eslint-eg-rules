@@ -77,4 +77,9 @@ After every new rule is created **or** an existing rule is modified, you **MUST*
 - **Project Documentation Sync**: Every time a rule is created or updated, you MUST update both the root `README.md` (rules table and options) and the `eslint-eg-rules.skill.md` skill file (rule summaries). See **Step 6** for details. This is mandatory and must be completed before the task is considered done.
 - **Robustness**: Don't rely exclusively on node names if type resolution is necessary. Check all variants of a construct (e.g., function expressions vs declarations).
 - **TypeScript AST**: If writing TypeScript rules, be sure to use `@typescript-eslint/utils` and account for nodes like `TSTypeAnnotation`, `TSInterfaceDeclaration`, etc.
+- **ESLint v8/v9 Compatibility**: When writing or updating custom rules, always ensure the rules and their tests are fully compatible with both ESLint v8 and ESLint v9. Specifically:
+  - Do not call deprecated/removed `context` methods (e.g., `context.getSourceCode()`, `context.getScope()`, `context.getFilename()`).
+  - Use hybrid fallbacks: `const sourceCode = context.sourceCode || context.getSourceCode();`, `const scope = sourceCode.getScope ? sourceCode.getScope(node) : context.getScope();`, and `const filename = context.filename ?? context.getFilename();`.
+  - Always export the `meta` object (required in v9) and define `meta.schema` for rules that accept options.
+  - In unit tests using `RuleTester`, ensure that `output` is explicitly provided for all fixable rules' invalid test cases (strict check in v9).
 - **Language**: Use only English for all documentation and error messages. But you can speak in Turkish in Chat mode.

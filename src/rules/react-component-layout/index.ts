@@ -1,15 +1,13 @@
-import { Rule } from 'eslint';
+import { TSESLint } from '@typescript-eslint/utils';
 import { Node } from 'estree';
 
-export const reactComponentLayoutRule: Rule.RuleModule = {
+export const reactComponentLayoutRule: TSESLint.RuleModule<any, any> = {
   meta: {
     type: 'layout',
     fixable: 'code',
     docs: {
       description:
         'Enforce chronological layout grouping inside React Components for better readability.',
-      category: 'Stylistic Issues',
-      recommended: true,
     },
     messages: {
       order:
@@ -19,6 +17,7 @@ export const reactComponentLayoutRule: Rule.RuleModule = {
     },
     schema: [],
   },
+  defaultOptions: [],
 
   create(context) {
     const sourceCode = context.sourceCode || context.getSourceCode();

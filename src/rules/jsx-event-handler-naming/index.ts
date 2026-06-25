@@ -33,7 +33,7 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     const strictMatch = options.strict !== false;
 
     function isLocalVariable(node: TSESTree.Identifier): boolean {
-      const sourceCode = context.getSourceCode();
+      const sourceCode = context.sourceCode || context.getSourceCode();
       const scope = sourceCode.getScope ? sourceCode.getScope(node) : context.getScope();
 
       let currentScope: TSESLint.Scope.Scope | null = scope as unknown as TSESLint.Scope.Scope;

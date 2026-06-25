@@ -192,3 +192,22 @@ const SortableHeaderCell = () => <th className={styles.sortableHeaderCell__conte
 // ❌ (strict mode: block doesn't match React component Name)
 const SortableHeaderCell = () => <th className={styles.table__th} />;
 ```
+
+---
+
+## 10. ESLint v8 / v9 Compatibility Rules
+All rules developed or modified in this plugin must maintain native compatibility with both ESLint v8 and ESLint v9.
+
+### Coding guidelines:
+* **Context Methods:** Never call deprecated/removed methods directly on the `context` object (e.g. `context.getSourceCode()`, `context.getScope()`, `context.getFilename()`).
+* **SourceCode Fallback:** Always resolve properties lazily with fallbacks:
+  ```typescript
+  const sourceCode = context.sourceCode || context.getSourceCode();
+  const scope = sourceCode.getScope ? sourceCode.getScope(node) : context.getScope();
+  const filename = context.filename ?? context.getFilename();
+  ```
+* **Rule Definitions:** Every rule must be defined as an object exporting `meta` and `create` (no function-style rules). Rules that accept options must define a schema `meta.schema` (even if empty `[]`).
+
+### Testing guidelines:
+* **RuleTester Autofix Output:** When testing rules that perform autofixing, you **must** specify the expected `output` in all `invalid` test cases, as ESLint v9's `RuleTester` strictly validates autofix outputs.
+
