@@ -18,7 +18,7 @@ const ruleTester = new RuleTester({
   },
 });
 
-ruleTester.run('api-type-suffix', rule as any, {
+ruleTester.run('api-type-suffix', rule, {
   valid: [
     // Standard correct usage
     {

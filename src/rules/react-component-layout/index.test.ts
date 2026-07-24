@@ -20,7 +20,7 @@ const ruleTester = new RuleTester({
   },
 });
 
-ruleTester.run('react-component-layout', reactComponentLayoutRule as any, {
+ruleTester.run('react-component-layout', reactComponentLayoutRule, {
   valid: [
     {
       code: `

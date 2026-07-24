@@ -23,7 +23,7 @@ const withFilename = (testCases: any[]) =>
     filename: tc.filename || 'src/components/MyComponent.test.ts',
   }));
 
-ruleTester.run('test-statement-match', rule as any, {
+ruleTester.run('test-statement-match', rule, {
   valid: withFilename([
     {
       code: `it('should work properly', () => {})`,

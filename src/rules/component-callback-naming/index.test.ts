@@ -17,7 +17,7 @@ const ruleTester = new RuleTester({
   },
 });
 
-ruleTester.run('component-callback-naming', rule as any, {
+ruleTester.run('component-callback-naming', rule, {
   valid: [
     // 1. Used in Component, valid name
     {

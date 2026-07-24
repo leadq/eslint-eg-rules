@@ -7,6 +7,7 @@ import testStatementMatch from './rules/test-statement-match';
 import { reactComponentLayoutRule } from './rules/react-component-layout';
 import noTestAttrs from './rules/no-test-attrs';
 import reactBemNaming from './rules/react-bem-naming';
+import noUnusedDepsInHooks from './rules/no-unused-deps-in-hooks';
 
 export const rules = {
   'api-type-suffix': apiTypeSuffix,
@@ -18,6 +19,7 @@ export const rules = {
   'react-component-layout': reactComponentLayoutRule,
   'no-test-attrs': noTestAttrs,
   'react-bem-naming': reactBemNaming,
+  'no-unused-deps-in-hooks': noUnusedDepsInHooks,
 };
 
 export const meta = {
@@ -34,9 +36,10 @@ const legacyRecommended = {
     'strict-eg-rulez/functions-naming': 'error',
     'strict-eg-rulez/boolean-prop-naming': 'error',
     'strict-eg-rulez/test-statement-match': 'error',
-    'strict-eg-rulez/react-component-layout': 'warn',
+    'strict-eg-rulez/react-component-layout': 'error',
     'strict-eg-rulez/no-test-attrs': 'error',
     'strict-eg-rulez/react-bem-naming': 'error',
+    'strict-eg-rulez/no-unused-deps-in-hooks': 'error',
   },
 };
 
@@ -49,4 +52,3 @@ export const configs = {
     rules: legacyRecommended.rules,
   },
 };
-
