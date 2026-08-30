@@ -13,9 +13,13 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
   - [functions-naming](#functions-naming)
   - [jsx-event-handler-naming](#jsx-event-handler-naming)
   - [no-test-attrs](#no-test-attrs)
+  - [no-unused-deps-in-hooks](#no-unused-deps-in-hooks)
   - [react-bem-naming](#react-bem-naming)
   - [react-component-layout](#react-component-layout)
   - [test-statement-match](#test-statement-match)
+  - [util-hook-single-export](#util-hook-single-export)
+  - [util-hook-colocation](#util-hook-colocation)
+  - [react-component-props-naming-check](#react-component-props-naming-check)
 - [Development](#development)
 - [Demo Project](#demo-project)
 - [Adding a New Rule](#adding-a-new-rule)
@@ -341,6 +345,113 @@ test('returns null for empty data', () => { ... }); // No conjunction
 |----------------------|------------|------------------------------------------------------------|---------------------------------------------|
 | `conjunctions`       | `string[]` | `["if", "when", "while", "after", "before", "with", ...]` | Valid conjunctions list                     |
 | `ignoreTestPatterns` | `string[]` | `[]`                                                       | File patterns (regex) to exclude from check |
+
+---
+
+### `util-hook-single-export`
+
+Enforces Single Responsibility for `utils/` and `hooks/` directories by ensuring that each file exports at most one function or custom hook. It prevents collector files (`*Utils.ts`, `helpers.ts`), forbids default exports (configurable), and checks filename matching.
+
+```ts
+// ✅ Valid: /src/utils/date/formatDate.ts
+export const formatDate = (date: Date): string => { ... };
+
+// ✅ Valid: /src/utils/calculateBalance.ts (Unexported internal helpers are allowed)
+const getData = () => { ... };
+export const calculateBalance = () => { ... };
+
+// ❌ Invalid: Multiple exported functions in one file
+export const formatDate = (date: Date) => { ... };
+export const getDayDiff = (a: Date, b: Date) => { ... };
+
+// ❌ Invalid: Collector file name
+// File: src/utils/dateUtils.ts
+export const formatDate = (date: Date) => { ... };
+
+// ❌ Invalid: Default exports forbidden by default
+export default function calculateBalance() { ... }
+```
+
+**Options:**
+
+```json
+["error", {
+  "maxExports": 1,
+  "allowDefaultExport": false,
+  "allowTypeExports": true,
+  "enforceFileNameMatch": true
+}]
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `maxExports` | `number` | `1` | Max exported value symbols allowed per file |
+| `allowDefaultExport` | `boolean` | `false` | Forbid default exports in util/hook files |
+| `allowTypeExports` | `boolean` | `true` | Allow type/interface exports alongside the function |
+| `enforceFileNameMatch` | `boolean` | `true` | Enforce that export name matches file name |
+
+---
+
+### `util-hook-colocation`
+
+Enforces Colocation boundaries for local utils and hooks in component directories. Ensures private helpers in `components/X/utils/*` or `components/X/hooks/*` are not imported outside `components/X/`.
+
+```ts
+// ✅ Valid: /src/components/AccountDetail/index.tsx
+import { formatAccountNumber } from './utils/formatAccountNumber';
+
+// ✅ Valid: /src/components/AccountDetail/TransactionList/index.tsx (child component)
+import { formatAccountNumber } from '../utils/formatAccountNumber';
+
+// ❌ Invalid: /src/components/TransactionList/index.tsx (sibling component importing private util)
+import { formatAccountNumber } from '../AccountDetail/utils/formatAccountNumber';
+
+// ❌ Invalid: /src/pages/Dashboard/index.tsx (page importing private component hook)
+import { useAccountDetail } from '../../components/AccountDetail/hooks/useAccountDetail';
+```
+
+**Options:**
+
+```json
+["error", {
+  "componentDirs": ["components", "pages", "views", "modules", "app", "features"],
+  "utilFolderNames": ["utils", "hooks"]
+}]
+```
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `componentDirs` | `string[]` | `["components", "pages", ...]` | Folder names considered component root containers |
+| `utilFolderNames` | `string[]` | `["utils", "hooks"]` | Subfolder names considered local helper directories |
+
+---
+
+### `react-component-props-naming-check`
+
+Enforces that props types passed to React components follow the `{ComponentName}Props` naming convention.
+
+- Applies to PascalCase functions that return JSX (`returnsJSX` check).
+- Supports standard functions, arrow functions, `React.memo`, and `React.forwardRef`.
+- Supports `PropsWithChildren<{ComponentName}Props>` wrappers and intersections (`{ComponentName}Props & React.HTMLAttributes<T>`).
+- Ignores components without props, untyped props, inline object types (`{ text: string }`), hook functions (`use*`), render helpers (`render*`), non-JSX functions, test files, and `apis/` files.
+
+```tsx
+// ✅ Valid
+interface LoginProps { username: string }
+function Login(props: LoginProps) { return <form>{props.username}</form>; }
+
+interface CardProps { title: string }
+const Card = (props: PropsWithChildren<CardProps>) => <div>{props.children}</div>;
+
+const Header = () => <header>Site Header</header>;
+
+// ❌ Invalid
+interface LoginData { username: string }
+function Login(props: LoginData) { return <form>{props.username}</form>; } // should be LoginProps
+
+interface ButtonSettings { label: string }
+const ActionButton = (props: ButtonSettings) => <button>{props.label}</button>; // should be ActionButtonProps
+```
 
 ---
 

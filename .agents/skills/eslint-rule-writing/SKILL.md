@@ -181,7 +181,7 @@ After every new rule is created **or** an existing rule is modified, you **MUST*
    - If the rule has new or changed options, reflect them in the relevant documentation section.
    - If the rule is being removed or renamed, remove or update its entry accordingly.
 
-2. **`eslint-eg-rules.skill.md`** (project skill file, if it exists at the root or in `.agent/`):
+2. **`.agents/skills/eslint-eg-rules/SKILL.md`** (project rules catalog skill file):
    - Add or update the rule's summary so that the skill file always reflects the current set of rules and their behaviors.
    - Include the rule name, a one-line description, and any notable options or exceptions.
    - Keep the skill file in sync so that future LLM sessions have accurate context about the plugin's capabilities.
@@ -192,7 +192,7 @@ After every new rule is created **or** an existing rule is modified, you **MUST*
 
 - **Test/Doc Synchronization**: If the user provides documentation first, generate tests + code. If the user provides tests first, generate documentation + code. ALWAYS keep documentation, tests, and the demo project examples in sync.
 - **Refactoring**: When modifying a rule, you MUST update unit tests, `src/index.ts` (if renaming), the documentation, and the demo examples.
-- **Project Documentation Sync**: Every time a rule is created or updated, you MUST update both the root `README.md` (rules table and options) and the `eslint-eg-rules.skill.md` skill file (rule summaries). See **Step 7** for details. This is mandatory and must be completed before the task is considered done.
+- **Project Documentation Sync**: Every time a rule is created or updated, you MUST update both the root `README.md` (rules table and options) and the `.agents/skills/eslint-eg-rules/SKILL.md` skill file (rule summaries). See **Step 7** for details. This is mandatory and must be completed before the task is considered done.
 - **Robustness**: Don't rely exclusively on node names if type resolution is necessary. Check all variants of a construct (e.g., function expressions vs declarations).
 - **TypeScript AST**: If writing TypeScript rules, be sure to use `@typescript-eslint/utils` and account for nodes like `TSTypeAnnotation`, `TSInterfaceDeclaration`, etc.
 - **ESLint v8/v9 Compatibility**: When writing or updating custom rules, always ensure the rules and their tests are fully compatible with both ESLint v8 and ESLint v9. Specifically:

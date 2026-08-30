@@ -22,6 +22,9 @@ module.exports = {
     'strict-eg-rulez/test-statement-match': 'error',
     'strict-eg-rulez/react-component-layout': 'error',
     'strict-eg-rulez/no-test-attrs': 'error',
+    'strict-eg-rulez/util-hook-single-export': 'error',
+    'strict-eg-rulez/util-hook-colocation': 'error',
+    'strict-eg-rulez/react-component-props-naming-check': 'error',
   },
   overrides: [
     {

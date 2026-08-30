@@ -1,25 +1,23 @@
-# Project Instructions — Codex / OpenAI
+# Project Instructions
 
-This is an ESLint plugin project (`eslint-eg-rules`). All custom ESLint rule development **must** follow the comprehensive skill defined in this repository.
+This is an ESLint plugin project (`eslint-eg-rules`). All custom ESLint rule development **must** follow the comprehensive skills defined in this repository.
 
-## Mandatory Skill
+## Available Project Skills
 
-Before creating, modifying, or testing any ESLint rule, you **MUST** read and follow the instructions in:
+1. 📄 **[Rule Writing Workflow (`.agents/skills/eslint-rule-writing/SKILL.md`)](.agents/skills/eslint-rule-writing/SKILL.md)**
+   - AST coverage analysis (all JS/TS representations, module boundaries, analysis layer selection)
+   - Test-Driven Development workflow
+   - Rule implementation with AST normalization
+   - Integration, registration, and build steps
+   - Demo project E2E testing
+   - Project documentation sync
+   - ESLint v8/v9 compatibility requirements
 
-📄 **[`.agent/skills/eslint-rule-writing/SKILL.md`](.agent/skills/eslint-rule-writing/SKILL.md)**
+2. 📄 **[Existing Rules Catalog (`.agents/skills/eslint-eg-rules/SKILL.md`)](.agents/skills/eslint-eg-rules/SKILL.md)**
+   - Complete catalog and code examples (✅ / ❌) for all existing plugin rules.
 
-This skill covers:
-- AST coverage analysis (all JS/TS representations, module boundaries, analysis layer selection)
-- Test-Driven Development workflow
-- Rule implementation with AST normalization
-- Integration, registration, and build steps
-- Demo project E2E testing
-- Project documentation sync (README.md + skill file)
-- ESLint v8/v9 compatibility requirements
-
-> **Do not skip this step.** The skill file is the single source of truth for how rules are developed in this project.
+> **Important:** The skill files are the single source of truth for developing and understanding rules in this project.
 
 ## Additional Context
 
-- **Project skill file**: `eslint-eg-rules.skill.md` (root) — contains summaries of all existing rules and plugin capabilities.
 - **Language**: Use English for all code, documentation, and error messages. Turkish is acceptable in chat/conversation mode only.

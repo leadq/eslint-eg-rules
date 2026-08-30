@@ -195,7 +195,83 @@ const SortableHeaderCell = () => <th className={styles.table__th} />;
 
 ---
 
-## 10. ESLint v8 / v9 Compatibility Rules
+## 10. `util-hook-single-export` — Single Responsibility for Utils and Hooks
+
+Enforces Single Responsibility in `utils/` and `hooks/` directories: at most one exported function or hook per file, disallows collector files (`*Utils.ts`, `helpers.ts`), forbids default exports, and ensures the export name matches the file name.
+
+```ts
+// ✅
+// /src/utils/date/formatDate.ts
+export const formatDate = (date: Date): string => { ... };
+
+// /src/utils/calculateBalance.ts (Unexported private helpers are allowed)
+const getData = () => { ... };
+export const calculateBalance = () => { ... };
+
+// ❌
+// /src/utils/date/formatDate.ts (Multiple exported functions)
+export const formatDate = (date: Date) => { ... };
+export const getDayDiff = (a: Date, b: Date) => { ... };
+
+// /src/utils/dateUtils.ts (Banned collector file name)
+export const formatDate = (date: Date) => { ... };
+
+// /src/utils/calculateBalance.ts (Default export forbidden)
+export default function calculateBalance() { ... }
+```
+
+---
+
+## 11. `util-hook-colocation` — Colocation Boundaries for Component Helpers
+
+Enforces that local utils and hooks located inside component folders (`components/X/utils/*`, `components/X/hooks/*`) cannot be imported outside the `components/X/` subtree.
+
+```ts
+// ✅
+// /src/components/AccountDetail/index.tsx
+import { formatAccountNumber } from './utils/formatAccountNumber';
+
+// /src/components/AccountDetail/TransactionList/index.tsx (Child component)
+import { formatAccountNumber } from '../utils/formatAccountNumber';
+
+// ❌
+// /src/components/TransactionList/index.tsx (Sibling component)
+import { formatAccountNumber } from '../AccountDetail/utils/formatAccountNumber';
+
+// /src/pages/Dashboard/index.tsx (External page)
+import { useAccountDetail } from '../../components/AccountDetail/hooks/useAccountDetail';
+```
+
+---
+
+## 12. `react-component-props-naming-check` — Component Props Type Naming
+
+Verifies that props types passed to React component functions follow the `{ComponentName}Props` naming convention.
+
+- Applies to PascalCase functions returning JSX (`returnsJSX` check).
+- Supports standard functions, arrow functions, `React.memo`, and `React.forwardRef`.
+- Supports `PropsWithChildren<{ComponentName}Props>` wrappers and intersections (`{ComponentName}Props & React.HTMLAttributes<T>`).
+- Ignores components without props, untyped props, inline object types (`{ text: string }`), hook functions (`use*`), render helpers (`render*`), non-JSX functions, test files, and `apis/` files.
+
+```tsx
+// ✅
+interface LoginProps { username: string }
+function Login(props: LoginProps) { return <form>{props.username}</form>; }
+
+interface CardProps { title: string }
+const Card = (props: PropsWithChildren<CardProps>) => <div>{props.children}</div>;
+
+// ❌
+interface LoginData { username: string }
+function Login(props: LoginData) { return <form>{props.username}</form>; } // should be LoginProps
+
+interface ButtonSettings { label: string }
+const ActionButton = (props: ButtonSettings) => <button>{props.label}</button>; // should be ActionButtonProps
+```
+
+---
+
+## 13. ESLint v8 / v9 Compatibility Rules
 All rules developed or modified in this plugin must maintain native compatibility with both ESLint v8 and ESLint v9.
 
 ### Coding guidelines:

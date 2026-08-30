@@ -8,6 +8,9 @@ import { reactComponentLayoutRule } from './rules/react-component-layout';
 import noTestAttrs from './rules/no-test-attrs';
 import reactBemNaming from './rules/react-bem-naming';
 import noUnusedDepsInHooks from './rules/no-unused-deps-in-hooks';
+import utilHookSingleExport from './rules/util-hook-single-export';
+import utilHookColocation from './rules/util-hook-colocation';
+import reactComponentPropsNamingCheck from './rules/react-component-props-naming-check';
 
 export const rules = {
   'api-type-suffix': apiTypeSuffix,
@@ -20,6 +23,9 @@ export const rules = {
   'no-test-attrs': noTestAttrs,
   'react-bem-naming': reactBemNaming,
   'no-unused-deps-in-hooks': noUnusedDepsInHooks,
+  'util-hook-single-export': utilHookSingleExport,
+  'util-hook-colocation': utilHookColocation,
+  'react-component-props-naming-check': reactComponentPropsNamingCheck,
 };
 
 export const meta = {
@@ -40,6 +46,9 @@ const legacyRecommended = {
     'strict-eg-rulez/no-test-attrs': 'error',
     'strict-eg-rulez/react-bem-naming': 'error',
     'strict-eg-rulez/no-unused-deps-in-hooks': 'error',
+    'strict-eg-rulez/util-hook-single-export': 'error',
+    'strict-eg-rulez/util-hook-colocation': 'error',
+    'strict-eg-rulez/react-component-props-naming-check': 'error',
   },
 };
 
