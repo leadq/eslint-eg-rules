@@ -7,12 +7,14 @@ import {
   isDescendantOrSelf,
   extractImportFromNode,
 } from '../../utils/path-resolver';
+import { matchesIgnorePattern } from '../../utils/ast-helpers';
 
 type MessageIds = 'colocationViolation';
 
 export interface UtilHookColocationOptions {
   componentDirs?: string[];
   utilFolderNames?: string[];
+  ignorePatterns?: string[];
 }
 
 type Options = [UtilHookColocationOptions?];
@@ -20,6 +22,7 @@ type Options = [UtilHookColocationOptions?];
 const DEFAULT_OPTIONS: Required<UtilHookColocationOptions> = {
   componentDirs: ['components', 'pages', 'views', 'modules', 'app', 'features', 'widgets'],
   utilFolderNames: ['utils', 'hooks', 'helpers'],
+  ignorePatterns: ['**/*.test.*', '**/*.spec.*', '**/__tests__/**'],
 };
 
 const rule: TSESLint.RuleModule<MessageIds, Options> = {
@@ -37,10 +40,17 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           componentDirs: {
             type: 'array',
             items: { type: 'string' },
+            description: 'List of top-level directory names where components reside.',
           },
           utilFolderNames: {
             type: 'array',
             items: { type: 'string' },
+            description: 'Folder names that represent localized helpers (e.g. utils, hooks).',
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Glob patterns for files to ignore.',
           },
         },
         additionalProperties: false,
@@ -65,6 +75,10 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     }
 
     const normalizedCurrentFile = normalizePath(currentFilename);
+    if (matchesIgnorePattern(normalizedCurrentFile, options.ignorePatterns)) {
+      return {};
+    }
+
     const currentDir = path.posix.dirname(normalizedCurrentFile);
 
     function checkNode(node: TSESTree.Node) {

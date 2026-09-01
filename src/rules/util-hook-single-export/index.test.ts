@@ -83,6 +83,18 @@ ruleTester.run('util-hook-single-export', rule, {
       `,
       filename: '/src/utils/date/formatDate.ts',
     },
+    // 6b. Single function with exported constants (allowConstants: true default)
+    {
+      code: `
+        export const DEFAULT_FORMAT = 'YYYY-MM-DD';
+        export const SUPPORTED_LOCALES = ['tr', 'en'] as const;
+
+        export function formatDate(date: Date): string {
+          return '';
+        }
+      `,
+      filename: '/src/utils/date/formatDate.ts',
+    },
     // 7. Single export with export specifier list (export { formatDate })
     {
       code: `

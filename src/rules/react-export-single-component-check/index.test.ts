@@ -108,6 +108,24 @@ ruleTester.run('react-export-single-component-check', rule, {
       `,
       filename: '/src/components/reexports.tsx',
     },
+    // 10. Compound subcomponents allowed when compound option is true
+    {
+      code: `
+        export function Card() {
+          return <div>Card</div>;
+        }
+
+        export function CardHeader() {
+          return <div>Header</div>;
+        }
+
+        export function CardBody() {
+          return <div>Body</div>;
+        }
+      `,
+      filename: '/src/components/Card.tsx',
+      options: [{ compound: true }],
+    },
     // 10. export default is ignored
     {
       code: `

@@ -1,12 +1,31 @@
-import { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import { TSESLint, TSESTree, AST_NODE_TYPES } from '@typescript-eslint/utils';
+import {
+  isPascalCase,
+  isReactHook,
+  isJSXNode,
+  unwrapExpression,
+  matchesIgnorePattern,
+} from '../../utils/ast-helpers';
 
 type MessageIds = 'missingRenderPrefix' | 'missingBooleanPrefix' | 'missingValuePrefix';
-type Options = [];
 
-const jsxPrefixes = ['render'];
-const booleanPrefixes = ['is', 'has', 'will', 'can'];
-const valuePrefixes = ['calculate', 'get', 'determine'];
+export interface FunctionsNamingOptions {
+  booleanPrefixes?: string[];
+  valuePrefixes?: string[];
+  jsxPrefixes?: string[];
+  ignoreNames?: string[];
+  ignorePatterns?: string[];
+}
+
+type Options = [FunctionsNamingOptions?];
+
+const DEFAULT_OPTIONS: Required<FunctionsNamingOptions> = {
+  booleanPrefixes: ['is', 'has', 'will', 'can', 'should', 'did'],
+  valuePrefixes: ['calculate', 'get', 'determine'],
+  jsxPrefixes: ['render'],
+  ignoreNames: [],
+  ignorePatterns: ['**/*.test.*', '**/*.spec.*'],
+};
 
 function hasPrefix(name: string, prefixes: string[]) {
   return prefixes.some(
@@ -52,77 +71,99 @@ function getFunctionName(
   return null;
 }
 
-function shouldIgnore(name: string): boolean {
-  // Ignore React Components (Capitalized)
-  if (/^[A-Z]/.test(name)) return true;
+function shouldIgnore(name: string, ignoreNames: string[]): boolean {
+  if (ignoreNames.includes(name)) return true;
+  // Ignore React Components (Capitalized / PascalCase)
+  if (isPascalCase(name)) return true;
   // Ignore Hooks
-  if (/^use[A-Z]/.test(name) || name === 'use') return true;
+  if (isReactHook(name)) return true;
   // Ignore Event Handlers
-  if (/^(on|handle)[A-Z]/.test(name) || name === 'on' || name === 'handle') return true;
-
+  if (/^on[A-Z]/.test(name) || /^handle[A-Z]/.test(name)) return true;
+  // Ignore standard lifecycle/test/native methods
+  if (
+    [
+      'toString',
+      'valueOf',
+      'toJSON',
+      'render',
+      'constructor',
+      'componentDidMount',
+      'componentDidUpdate',
+      'componentWillUnmount',
+    ].includes(name)
+  ) {
+    return true;
+  }
   return false;
 }
 
-function findReturns(node: TSESTree.Node): TSESTree.Expression[] {
-  const returns: TSESTree.Expression[] = [];
+type ReturnNature = 'jsx' | 'boolean' | 'value' | 'unknown';
 
-  function traverse(n: any) {
-    if (!n || typeof n !== 'object') return;
+function getExpressionNature(node: TSESTree.Node | null | undefined): ReturnNature {
+  if (!node) return 'unknown';
+  const unwrapped = unwrapExpression(node);
+  if (!unwrapped) return 'unknown';
 
-    if (
-      n.type === AST_NODE_TYPES.FunctionDeclaration ||
-      n.type === AST_NODE_TYPES.FunctionExpression ||
-      n.type === AST_NODE_TYPES.ArrowFunctionExpression
-    ) {
-      return; // Stop at nested functions
-    }
-
-    if (n.type === AST_NODE_TYPES.ReturnStatement && n.argument) {
-      returns.push(n.argument);
-    }
-
-    for (const key in n) {
-      if (key === 'parent') continue; // Avoid circular references
-      const child = n[key];
-      if (Array.isArray(child)) {
-        child.forEach(traverse);
-      } else if (child && typeof child.type === 'string') {
-        traverse(child);
-      }
-    }
+  if (isJSXNode(unwrapped)) {
+    return 'jsx';
   }
 
-  if (node.type === AST_NODE_TYPES.BlockStatement) {
-    node.body.forEach(traverse);
+  // Literals
+  if (unwrapped.type === AST_NODE_TYPES.Literal) {
+    if (typeof (unwrapped as TSESTree.Literal).value === 'boolean') return 'boolean';
+    if (typeof (unwrapped as TSESTree.Literal).value === 'string') return 'value';
+    if (typeof (unwrapped as TSESTree.Literal).value === 'number') return 'value';
   }
 
-  return returns;
-}
+  // Template Literals (string)
+  if (unwrapped.type === AST_NODE_TYPES.TemplateLiteral) {
+    return 'value';
+  }
 
-function getExpressionNature(e: TSESTree.Node): 'jsx' | 'boolean' | 'value' | 'unknown' {
-  if (e.type === AST_NODE_TYPES.JSXElement || e.type === AST_NODE_TYPES.JSXFragment) return 'jsx';
+  // Array / Object Expressions
   if (
-    e.type === AST_NODE_TYPES.TemplateLiteral ||
-    e.type === AST_NODE_TYPES.ArrayExpression ||
-    e.type === AST_NODE_TYPES.ObjectExpression
+    unwrapped.type === AST_NODE_TYPES.ArrayExpression ||
+    unwrapped.type === AST_NODE_TYPES.ObjectExpression
   ) {
     return 'value';
   }
-  if (e.type === AST_NODE_TYPES.Literal) {
-    if (typeof e.value === 'boolean') return 'boolean';
-    if (typeof e.value === 'string' || typeof e.value === 'number') return 'value';
+
+  // Logical Expressions
+  if (unwrapped.type === AST_NODE_TYPES.LogicalExpression) {
+    const leftNature = getExpressionNature(unwrapped.left);
+    const rightNature = getExpressionNature(unwrapped.right);
+    if (leftNature === 'jsx' || rightNature === 'jsx') return 'jsx';
+    if (leftNature === 'boolean' || rightNature === 'boolean') return 'boolean';
+    if (leftNature === 'value' || rightNature === 'value') return 'value';
   }
-  if (e.type === AST_NODE_TYPES.BinaryExpression) {
-    if (['==', '!=', '===', '!==', '<', '<=', '>', '>=', 'in', 'instanceof'].includes(e.operator)) {
+
+  // Conditional Expression
+  if (unwrapped.type === AST_NODE_TYPES.ConditionalExpression) {
+    const consNature = getExpressionNature(unwrapped.consequent);
+    const altNature = getExpressionNature(unwrapped.alternate);
+    if (consNature === 'jsx' || altNature === 'jsx') return 'jsx';
+    if (consNature === 'boolean' || altNature === 'boolean') return 'boolean';
+    if (consNature === 'value' || altNature === 'value') return 'value';
+  }
+
+  // Binary Expression (comparisons are boolean, math/string operations are value)
+  if (unwrapped.type === AST_NODE_TYPES.BinaryExpression) {
+    if (
+      ['===', '!==', '==', '!=', '>', '<', '>=', '<=', 'instanceof', 'in'].includes(
+        unwrapped.operator
+      )
+    ) {
       return 'boolean';
     }
     return 'value';
   }
-  if (e.type === AST_NODE_TYPES.UnaryExpression) {
-    if (e.operator === '!') return 'boolean';
-    if (e.operator === '+' || e.operator === '-' || e.operator === '~') return 'value';
-    if (e.operator === 'typeof') return 'value';
+
+  // Unary Expression
+  if (unwrapped.type === AST_NODE_TYPES.UnaryExpression) {
+    if (unwrapped.operator === '!') return 'boolean';
+    if (['+', '-', '~', 'typeof'].includes(unwrapped.operator)) return 'value';
   }
+
   return 'unknown';
 }
 
@@ -131,52 +172,68 @@ function getReturnNature(
     | TSESTree.FunctionDeclaration
     | TSESTree.FunctionExpression
     | TSESTree.ArrowFunctionExpression
-): 'jsx' | 'boolean' | 'value' | 'unknown' {
-  // 1. Check Type Annotations
-  if (node.returnType && node.returnType.typeAnnotation) {
-    const type = node.returnType.typeAnnotation.type;
-    if (type === AST_NODE_TYPES.TSBooleanKeyword) return 'boolean';
+): ReturnNature {
+  if (node.returnType?.typeAnnotation) {
+    const typeNode = node.returnType.typeAnnotation;
     if (
-      type === AST_NODE_TYPES.TSStringKeyword ||
-      type === AST_NODE_TYPES.TSNumberKeyword ||
-      type === AST_NODE_TYPES.TSArrayType ||
-      type === AST_NODE_TYPES.TSTupleType ||
-      type === AST_NODE_TYPES.TSObjectKeyword
+      typeNode.type === AST_NODE_TYPES.TSBooleanKeyword ||
+      (typeNode.type === AST_NODE_TYPES.TSTypeReference &&
+        (typeNode.typeName as any).name === 'boolean')
+    ) {
+      return 'boolean';
+    }
+    if (
+      typeNode.type === AST_NODE_TYPES.TSStringKeyword ||
+      typeNode.type === AST_NODE_TYPES.TSNumberKeyword ||
+      typeNode.type === AST_NODE_TYPES.TSObjectKeyword ||
+      typeNode.type === AST_NODE_TYPES.TSArrayType ||
+      typeNode.type === AST_NODE_TYPES.TSTupleType ||
+      typeNode.type === AST_NODE_TYPES.TSTypeLiteral
     ) {
       return 'value';
     }
-    if (type === AST_NODE_TYPES.TSTypeReference) {
-      const typeRef = node.returnType.typeAnnotation as TSESTree.TSTypeReference;
-      if (typeRef.typeName?.type === AST_NODE_TYPES.Identifier) {
-        if (typeRef.typeName.name === 'Record') return 'value';
-        if (
-          typeRef.typeName.name === 'JSX_Element' ||
-          typeRef.typeName.name === 'ReactNode' ||
-          typeRef.typeName.name === 'ReactElement'
-        )
-          return 'jsx';
-      } else if (
-        typeRef.typeName?.type === AST_NODE_TYPES.TSQualifiedName &&
-        typeRef.typeName.left.type === AST_NODE_TYPES.Identifier &&
-        typeRef.typeName.left.name === 'JSX' &&
-        typeRef.typeName.right.type === AST_NODE_TYPES.Identifier &&
-        typeRef.typeName.right.name === 'Element'
-      ) {
-        return 'jsx';
+    if (
+      typeNode.type === AST_NODE_TYPES.TSTypeReference &&
+      ['ReactNode', 'JSX.Element', 'ReactElement'].includes((typeNode.typeName as any).name)
+    ) {
+      return 'jsx';
+    }
+  }
+
+  if (node.body.type !== AST_NODE_TYPES.BlockStatement) {
+    return getExpressionNature(node.body);
+  }
+
+  const returns: TSESTree.Node[] = [];
+  function findReturns(current: TSESTree.Node) {
+    if (
+      current !== node &&
+      (current.type === AST_NODE_TYPES.FunctionDeclaration ||
+        current.type === AST_NODE_TYPES.FunctionExpression ||
+        current.type === AST_NODE_TYPES.ArrowFunctionExpression)
+    ) {
+      return;
+    }
+
+    if (current.type === AST_NODE_TYPES.ReturnStatement && current.argument) {
+      returns.push(current.argument);
+    }
+
+    for (const key of Object.keys(current)) {
+      if (key === 'parent') continue;
+      const child = (current as any)[key];
+      if (child && typeof child === 'object') {
+        if (Array.isArray(child)) {
+          child.forEach((c) => c && typeof c === 'object' && findReturns(c));
+        } else if (child.type) {
+          findReturns(child);
+        }
       }
     }
   }
 
-  // 2. Check Arrow Function Direct Returns
-  if (
-    node.type === AST_NODE_TYPES.ArrowFunctionExpression &&
-    node.body.type !== AST_NODE_TYPES.BlockStatement
-  ) {
-    return getExpressionNature(node.body);
-  }
+  findReturns(node.body);
 
-  // 3. Check Return Statements
-  const returns = findReturns(node.body);
   for (const ret of returns) {
     const nature = getExpressionNature(ret);
     if (nature !== 'unknown') return nature;
@@ -191,8 +248,36 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     docs: {
       description:
         'Enforces function prefixes based on their return types (e.g. render for JSX, is/has for booleans, get/calculate for values).',
-    },
-    schema: [],
+      recommended: true,
+    } as any,
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          booleanPrefixes: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          valuePrefixes: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          jsxPrefixes: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          ignoreNames: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       missingRenderPrefix:
         'Functions returning JSX should be prefixed with "render" (e.g., renderComponent).',
@@ -202,8 +287,21 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
         'Functions returning objects, arrays, numbers, or strings should be prefixed with "get", "calculate", or "determine".',
     },
   },
-  defaultOptions: [],
+  defaultOptions: [{}],
   create(context) {
+    const customOptions = context.options[0] || {};
+    const options: Required<FunctionsNamingOptions> = {
+      ...DEFAULT_OPTIONS,
+      ...customOptions,
+    };
+
+    const filename = context.filename ?? context.getFilename();
+    if (filename && filename !== '<input>' && filename !== '<text>') {
+      if (matchesIgnorePattern(filename, options.ignorePatterns)) {
+        return {};
+      }
+    }
+
     function processFunction(
       node:
         | TSESTree.FunctionDeclaration
@@ -213,21 +311,21 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
       const name = getFunctionName(node);
       if (!name) return;
 
-      if (shouldIgnore(name)) return;
+      if (shouldIgnore(name, options.ignoreNames)) return;
 
       const nature = getReturnNature(node);
 
-      if (nature === 'jsx' && !hasPrefix(name, jsxPrefixes)) {
+      if (nature === 'jsx' && !hasPrefix(name, options.jsxPrefixes)) {
         context.report({
           node,
           messageId: 'missingRenderPrefix',
         });
-      } else if (nature === 'boolean' && !hasPrefix(name, booleanPrefixes)) {
+      } else if (nature === 'boolean' && !hasPrefix(name, options.booleanPrefixes)) {
         context.report({
           node,
           messageId: 'missingBooleanPrefix',
         });
-      } else if (nature === 'value' && !hasPrefix(name, valuePrefixes)) {
+      } else if (nature === 'value' && !hasPrefix(name, options.valuePrefixes)) {
         context.report({
           node,
           messageId: 'missingValuePrefix',

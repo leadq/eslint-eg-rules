@@ -1,727 +1,712 @@
 # eslint-plugin-strict-eg-rulez
 
-A collection of custom ESLint rules for React + TypeScript projects. Designed to enforce consistency, readability, and maintainability across frontend codebases.
+[![npm version](https://img.shields.io/npm/v/eslint-plugin-strict-eg-rulez.svg)](https://www.npmjs.com/package/eslint-plugin-strict-eg-rulez)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![ESLint v8/v9 Support](https://img.shields.io/badge/ESLint-v8%20%7C%20v9%20Flat%20Config-4B32C3.svg)](https://eslint.org/)
 
-## Table of Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Category Presets](#category-presets)
-- [Rules](#rules)
-  - [api-type-suffix](#api-type-suffix)
-  - [boolean-prop-naming](#boolean-prop-naming)
-  - [component-callback-naming](#component-callback-naming)
-  - [functions-naming](#functions-naming)
-  - [jsx-event-handler-naming](#jsx-event-handler-naming)
-  - [no-test-attrs](#no-test-attrs)
-  - [no-unused-deps-in-hooks](#no-unused-deps-in-hooks)
-  - [react-bem-naming](#react-bem-naming)
-  - [react-component-layout](#react-component-layout)
-  - [test-statement-match](#test-statement-match)
-  - [util-hook-single-export](#util-hook-single-export)
-  - [util-hook-colocation](#util-hook-colocation)
-  - [react-component-props-naming-check](#react-component-props-naming-check)
-  - [react-export-single-component-check](#react-export-single-component-check)
-  - [no-upstream-imports](#no-upstream-imports)
-  - [no-deep-relative-imports](#no-deep-relative-imports)
-- [Development](#development)
-- [Demo Project](#demo-project)
-- [Adding a New Rule](#adding-a-new-rule)
+An enterprise-grade, highly-configurable ESLint plugin for modern **React + TypeScript** codebases. Designed to strictly enforce clean architecture, domain-driven colocation, single responsibility, predictable naming conventions, and layout hygiene.
 
 ---
 
-## Installation
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+  - [ESLint v9+ (Flat Config)](#eslint-v9-flat-config---eslintconfigmjs)
+  - [ESLint v8 (Legacy Config)](#eslint-v8-legacy-config---eslintrcjs)
+- [Rule Taxonomy & Category Presets](#-rule-taxonomy--category-presets)
+- [📖 Rules Catalog](#-rules-catalog)
+  - [🏷️ Naming Rules](#️-naming-rules)
+    - [`api-type-suffix`](#1-strict-eg-rulezapi-type-suffix)
+    - [`boolean-prop-naming`](#2-strict-eg-rulezboolean-prop-naming)
+    - [`component-callback-naming`](#3-strict-eg-rulezcomponent-callback-naming)
+    - [`functions-naming`](#4-strict-eg-rulezfunctions-naming)
+    - [`jsx-event-handler-naming`](#5-strict-eg-rulezjsx-event-handler-naming)
+    - [`react-bem-naming`](#6-strict-eg-rulezreact-bem-naming)
+    - [`react-component-props-naming-check`](#7-strict-eg-rulezreact-component-props-naming-check)
+  - [🏗️ Architecture Rules](#️-architecture-rules)
+    - [`util-hook-colocation`](#8-strict-eg-rulezutil-hook-colocation)
+    - [`react-component-layout`](#9-strict-eg-rulezreact-component-layout)
+    - [`no-upstream-imports`](#10-strict-eg-rulezno-upstream-imports)
+  - [💎 Quality Rules](#-quality-rules)
+    - [`util-hook-single-export`](#11-strict-eg-rulezutil-hook-single-export)
+    - [`no-deep-relative-imports`](#12-strict-eg-rulezno-deep-relative-imports)
+  - [⚛️ React Rules](#️-react-rules)
+    - [`react-export-single-component-check`](#13-strict-eg-rulezreact-export-single-component-check)
+    - [`no-unused-deps-in-hooks`](#14-strict-eg-rulezno-unused-deps-in-hooks)
+  - [🧪 Testing Rules](#-testing-rules)
+    - [`test-statement-match`](#15-strict-eg-ruleztest-statement-match)
+    - [`no-test-attrs`](#16-strict-eg-rulezno-test-attrs)
+- [Development & Contributing](#-development--contributing)
+- [License](#-license)
+
+---
+
+## 🚀 Features
+
+- **Full ESLint v8 & v9 Support**: Out-of-the-box compatibility with both legacy `.eslintrc` and Flat Config (`eslint.config.js` / `eslint.config.mjs`).
+- **Deep AST & Type-Aware Intelligence**: Built on `@typescript-eslint/utils` with support for TypeScript Generics, `type` vs `value` spaces, Type Assertions (`as const`, `satisfies`), and Wrapper HOCs (`memo`, `forwardRef`, `lazy`).
+- **100% Configurable**: All rules provide complete JSON schemas with fine-grained customization (custom prefixes, file ignore patterns, suffixes, compound components, etc.).
+- **Auto-Fixing Capabilities**: Rules like `react-component-layout` and `no-unused-deps-in-hooks` feature automated AST code fixes.
+
+---
+
+## 📦 Installation
 
 ```bash
 npm install eslint-plugin-strict-eg-rulez --save-dev
+# or
+yarn add -D eslint-plugin-strict-eg-rulez
+# or
+pnpm add -D eslint-plugin-strict-eg-rulez
 ```
 
-> **Peer dependency:** ESLint `>=8.0.0` is required.
+> **Peer Dependency:** Requires `eslint >= 8.0.0` and `@typescript-eslint/parser >= 8.0.0`.
 
 ---
 
-## Usage
+## ⚡ Quick Start
 
-### Flat Config (`eslint.config.mjs`):
+### ESLint v9 (Flat Config - `eslint.config.mjs`)
 
 ```js
 import strictEgRulez from 'eslint-plugin-strict-eg-rulez';
 
 export default [
-  // Recommended (All rules enabled)
+  // Option A: Enable the entire recommended preset (All 16 rules)
   strictEgRulez.configs['flat/recommended'],
 
-  // Or selectively enable specific categories:
+  // Option B: Enable selective category presets
   // strictEgRulez.configs['flat/architecture'],
   // strictEgRulez.configs['flat/quality'],
   // strictEgRulez.configs['flat/naming'],
   // strictEgRulez.configs['flat/react'],
   // strictEgRulez.configs['flat/testing'],
+
+  // Option C: Manual rule configuration
+  {
+    plugins: {
+      'strict-eg-rulez': strictEgRulez,
+    },
+    rules: {
+      'strict-eg-rulez/util-hook-single-export': ['error', { allowConstants: true }],
+      'strict-eg-rulez/react-export-single-component-check': ['error', { compound: true }],
+    },
+  },
 ];
 ```
 
-### Legacy Config (`.eslintrc.cjs`):
+### ESLint v8 (Legacy Config - `.eslintrc.js`)
 
-```json
-{
-  "plugins": ["strict-eg-rulez"],
-  "extends": [
-    "plugin:strict-eg-rulez/recommended"
-  ]
-}
+```js
+module.exports = {
+  plugins: ['strict-eg-rulez'],
+  extends: [
+    'plugin:strict-eg-rulez/recommended',
+    // or specific category: 'plugin:strict-eg-rulez/architecture'
+  ],
+};
 ```
 
-### Category Presets
+---
 
-| Preset | Category | Included Rules |
+## 🗂️ Rule Taxonomy & Category Presets
+
+All rules in this plugin are strictly organized into 6 official categories:
+
+| Category | Description | Included Rules |
 | :--- | :--- | :--- |
-| `architecture` | 🏗️ Architecture | `util-hook-colocation`, `react-component-layout`, `no-upstream-imports` |
-| `quality` | 💎 Quality | `util-hook-single-export`, `no-deep-relative-imports` |
-| `naming` | 🏷️ Naming | `api-type-suffix`, `boolean-prop-naming`, `component-callback-naming`, `functions-naming`, `jsx-event-handler-naming`, `react-bem-naming`, `react-component-props-naming-check` |
-| `react` | ⚛️ React | `react-export-single-component-check`, `no-unused-deps-in-hooks` |
-| `testing` | 🧪 Testing | `test-statement-match`, `no-test-attrs` |
-| `recommended` | 🌟 All | All rules across all categories enabled. |
-
-
----
-
-## Rules
-
-### `api-type-suffix`
-
-Enforces that TypeScript `interface` and `type` declarations inside `src/apis/` end with an allowed suffix.
-
-- **Default suffixes:** `Model`, `Response`, `Request`
-- Consecutive suffixes are not allowed (e.g. `UserRequestModel` ❌)
-
-```ts
-// ✅ Valid
-interface UserModel { ... }
-type LoginResponse = { ... }
-
-// ❌ Invalid
-interface User { ... }              // Missing suffix
-interface UserRequestModel { ... }  // Consecutive suffixes
-```
-
-**Options:**
-
-```json
-["error", { "suffixes": ["Model", "Response", "Request"] }]
-```
-
-| Option     | Type       | Default                              | Description              |
-|------------|------------|--------------------------------------|--------------------------|
-| `suffixes` | `string[]` | `["Model", "Response", "Request"]`   | Allowed suffixes list    |
+| 🏷️ **`naming`** | Semantic naming conventions for functions, variables, props, types, and handlers | `api-type-suffix`, `boolean-prop-naming`, `component-callback-naming`, `functions-naming`, `jsx-event-handler-naming`, `react-bem-naming`, `react-component-props-naming-check` |
+| 🏗️ **`architecture`** | Dependency directions, layer boundaries, and helper colocation | `util-hook-colocation`, `react-component-layout`, `no-upstream-imports` |
+| 💎 **`quality`** | Single Responsibility (SRP), clean code practices, import hygiene | `util-hook-single-export`, `no-deep-relative-imports` |
+| ⚛️ **`react`** | React lifecycle, hooks correctness, single component exports | `react-export-single-component-check`, `no-unused-deps-in-hooks` |
+| 🧪 **`testing`** | Test statement phrasing, test description standards, test attribute isolation | `test-statement-match`, `no-test-attrs` |
+| 📁 **`structure`** | Physical file and folder anatomy | *(Ready for structure extensions)* |
 
 ---
 
-### `boolean-prop-naming`
+## 📖 Rules Catalog
 
-Enforces that boolean props and parameters in `components/`, `hooks/`, and `utils/` folders start with a boolean prefix.
+---
 
-- **Default prefixes:** `is`, `has`, `can`, `should`, `will`, `did`, `show`, `hide`
-- Applies to TypeScript-typed booleans: `boolean`, `boolean | null`, `boolean | undefined`, `true | false`
+### 🏷️ Naming Rules
 
+#### 1. `strict-eg-rulez/api-type-suffix`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
+
+Enforces that all TypeScript `type` and `interface` declarations defined in API directories (`src/apis/`, `src/api/`, `src/services/`) strictly end with an allowed semantic suffix (e.g., `Model`, `Response`, `Request`). Also prevents repetitive or consecutive suffixes (e.g. `UserRequestModel` ❌).
+
+##### ⚙️ Options
 ```ts
-// ✅ Valid
-interface ButtonProps {
-  isDisabled: boolean;
-  hasError?: boolean;
-}
-
-// ❌ Invalid
-interface ButtonProps {
-  disabled: boolean; // Missing prefix
+interface ApiTypeSuffixOptions {
+  suffixes?: string[];          // Allowed suffixes (Default: ['Model', 'Response', 'Request'])
+  apiFolderPatterns?: string[]; // Folders treated as API directories (Default: ['src/apis', 'src/api'])
+  ignorePatterns?: string[];    // Glob patterns to ignore (Default: ['**/*.test.*', '**/*.spec.*'])
 }
 ```
 
-**Options:**
-
-```json
-["error", { "prefixes": ["is", "has", "can"] }]
+##### ❌ Incorrect
+```ts
+// File: src/apis/user.ts
+export interface User { id: string; }             // Missing suffix
+export type UserRequestModel = { token: string; }; // Consecutive suffixes
 ```
 
-| Option     | Type       | Default                                                             | Description           |
-|------------|------------|---------------------------------------------------------------------|-----------------------|
-| `prefixes` | `string[]` | `["is", "has", "can", "should", "will", "did", "show", "hide"]`    | Allowed prefixes list |
+##### ✅ Correct
+```ts
+// File: src/apis/user.ts
+export interface UserModel { id: string; }
+export type UserRequest = { token: string; };
+export interface UserResponse { success: boolean; data: UserModel; }
+```
 
 ---
 
-### `component-callback-naming`
+#### 2. `strict-eg-rulez/boolean-prop-naming`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
 
-Enforces that callback function props defined in React component prop types start with `on`.
+Enforces standard boolean prefixes (`is`, `has`, `can`, `should`, `will`, `did`, `do`, `does`) for boolean properties and parameters in components, hooks, and utilities. Prevents ambiguous identifiers like `valid` or `open`. Standard HTML boolean attributes (`disabled`, `required`, `checked`, `readOnly`, `open`, etc.) are automatically exempt.
 
-- Also checks for past-tense event names (e.g. `onClicked` → use `onClick`) when `allowPastTense` is `false`
-- Supports `blacklist` and `whitelist` for fine-grained control
-
+##### ⚙️ Options
 ```ts
-// ✅ Valid
-interface CardProps {
+interface BooleanPropNamingOptions {
+  allowedPrefixes?: string[]; // List of allowed prefixes (Default: ['is', 'has', 'can', 'should', 'will', 'did', 'do', 'does'])
+  ignoreProps?: string[];     // Prop names exempt from checks (Default: HTML boolean attrs)
+  ignorePatterns?: string[];  // Glob patterns to ignore (Default: ['**/*.test.*', '**/*.spec.*'])
+}
+```
+
+##### ❌ Incorrect
+```ts
+interface ModalProps {
+  visible: boolean; // ❌ Should be isVisible or showModal
+  error: boolean;   // ❌ Should be hasError
+}
+function useToggle(active: boolean = false) {} // ❌ Should be isActive
+```
+
+##### ✅ Correct
+```ts
+interface ModalProps {
+  isVisible: boolean;
+  hasError: boolean;
+  disabled: boolean; // ✅ Allowed (Standard HTML attribute)
+}
+function useToggle(isActive: boolean = false) {}
+```
+
+---
+
+#### 3. `strict-eg-rulez/component-callback-naming`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
+
+Enforces that callback function props in React component prop types start with the `on` prefix (e.g. `onChange`, `onSubmit`). Prevents passive or past-tense callback names (e.g., `onClicked` ❌ vs `onClick` ✅).
+
+##### ⚙️ Options
+```ts
+interface ComponentCallbackNamingOptions {
+  allowPastTense?: boolean; // If true, permits past tense like onClicked (Default: false)
+  blacklist?: string[];     // Disallowed suffixes (Default: ['Clicked', 'Changed', 'Loaded'])
+  whitelist?: string[];     // Explicitly allowed names bypassing checks (Default: [])
+}
+```
+
+##### ❌ Incorrect
+```ts
+interface ButtonProps {
+  click: () => void;     // ❌ Missing 'on' prefix
+  onClicked: () => void; // ❌ Past-tense verb
+}
+```
+
+##### ✅ Correct
+```ts
+interface ButtonProps {
   onClick: () => void;
   onSubmit: (data: FormData) => void;
-}
-
-// ❌ Invalid
-interface CardProps {
-  click: () => void;     // Missing 'on' prefix
-  onClicked: () => void; // Past tense (when allowPastTense: false)
+  onFilterChange: (filter: string) => void;
 }
 ```
-
-**Options:**
-
-```json
-["error", {
-  "allowPastTense": false,
-  "blacklist": ["Clicked"],
-  "whitelist": ["onRefetch"]
-}]
-```
-
-| Option          | Type       | Default | Description                                        |
-|-----------------|------------|---------|----------------------------------------------------|
-| `allowPastTense`| `boolean`  | `false` | Allow past tense event suffixes (e.g. `ed`/`d`)   |
-| `blacklist`     | `string[]` | `[]`    | Disallowed suffixes (e.g. `Clicked`)               |
-| `whitelist`     | `string[]` | `[]`    | Names always considered valid (bypass all checks)  |
 
 ---
 
-### `functions-naming`
+#### 4. `strict-eg-rulez/functions-naming`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
 
-Enforces that functions are named according to their return type. React components, hooks, and event handlers are ignored.
+Enforces intent-revealing function names based on return value analysis:
+- **Returns JSX/ReactNode**: Must start with `render` (e.g., `renderHeader`). React components (PascalCase) are exempt.
+- **Returns Boolean**: Must start with `is`, `has`, `can`, `will`, `should`, `did` (e.g., `isAuthorized`).
+- **Returns Object/Array/Primitive/Value**: Must start with `calculate`, `get`, `determine`, `format`, `build`, etc. (e.g., `calculateTotal`, `getUserProfile`).
 
-| Return Type             | Required Prefix                     |
-|-------------------------|-------------------------------------|
-| JSX / ReactNode         | `render`                            |
-| `boolean`               | `is`, `has`, `will`, `can`          |
-| string / number / object / array | `get`, `calculate`, `determine` |
-
+##### ⚙️ Options
 ```ts
-// ✅ Valid
+interface FunctionsNamingOptions {
+  booleanPrefixes?: string[]; // Default: ['is', 'has', 'will', 'can', 'should', 'did']
+  valuePrefixes?: string[];   // Default: ['calculate', 'get', 'determine']
+  jsxPrefixes?: string[];     // Default: ['render']
+  ignoreNames?: string[];     // Function names to ignore
+  ignorePatterns?: string[];  // Glob patterns to ignore
+}
+```
+
+##### ❌ Incorrect
+```ts
+const userCard = () => <Card />;        // ❌ Missing 'render' prefix
+const ready = (): boolean => true;      // ❌ Missing boolean prefix
+const total = (): number => a + b;      // ❌ Missing 'calculate' / 'get'
+```
+
+##### ✅ Correct
+```ts
 const renderUserCard = () => <Card />;
-const isLoggedIn = (): boolean => true;
-const getUserName = (): string => 'John';
-
-// ❌ Invalid
-const userCard = () => <Card />;      // Missing 'render'
-const loggedIn = (): boolean => true; // Missing boolean prefix
-const userName = (): string => 'John'; // Missing value prefix
+const isReady = (): boolean => true;
+const calculateTotal = (): number => a + b;
+const getUserName = (): string => user.name;
 ```
-
-> This rule accepts no configuration options.
 
 ---
 
-### `jsx-event-handler-naming`
+#### 5. `strict-eg-rulez/jsx-event-handler-naming`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
 
-Enforces that locally defined event handlers passed to JSX event props (e.g. `onClick`) start with `handle`. In `strict` mode, the handler name must also end with the event name.
+Enforces that local event handler functions bound to JSX event attributes start with `handle` and (in `strict` mode) end with the event name.
 
+##### ⚙️ Options
+```ts
+interface JSXEventHandlerNamingOptions {
+  strict?: boolean;          // Requires matching event suffix (e.g., handleClick for onClick) (Default: true)
+  prefix?: string;           // Required handler prefix (Default: 'handle')
+  ignoreProps?: string[];    // Props to ignore
+  ignorePatterns?: string[]; // Glob patterns to ignore
+}
+```
+
+##### ❌ Incorrect
 ```tsx
-// ✅ Valid
-const handleClick = () => {};
-<Button onClick={handleClick} />
-
-// ✅ Valid (strict: true)
-const handleChange = () => {};
-<Input onChange={handleChange} />
-
-// ❌ Invalid — missing 'handle' prefix
 const clickAction = () => {};
-<Button onClick={clickAction} />
+const doSubmit = () => {};
 
-// ❌ Invalid — strict mode: must end with 'Change'
-const handleSubmit = () => {};
-<Input onChange={handleSubmit} />
+<button onClick={clickAction} />  // ❌ Missing 'handle' prefix
+<form onSubmit={doSubmit} />      // ❌ Missing 'handle' prefix
 ```
 
-**Options:**
-
-```json
-["error", { "strict": true }]
-```
-
-| Option   | Type      | Default | Description                                              |
-|----------|-----------|---------|----------------------------------------------------------|
-| `strict` | `boolean` | `true`  | Handler name must end with the corresponding event name  |
-
----
-
-### `no-test-attrs`
-
-Disallow test-only attributes (e.g. `data-testid`, `data-cy`) in non-test source files. These attributes should only appear in test files or test mocks.
-
-- **Default forbidden attributes:** `data-testid`, `data-test`, `data-test-id`, `data-cy`, `data-e2e`
-- Automatically ignores files ending with `.test.*`, `.spec.*`, or inside `__tests__/`
-
+##### ✅ Correct
 ```tsx
-// ✅ Valid (in any file)
-<div className="card" id="main" />
+const handleClick = () => {};
+const handleFormSubmit = () => {};
 
-// ✅ Valid (inside a test file like Button.test.tsx)
-<button data-testid="submit-btn" type="submit" />
-
-// ❌ Invalid (inside a normal component like Button.tsx)
-<button data-testid="submit-btn" type="submit" />
-<input data-cy="email-input" />
+<button onClick={handleClick} />
+<form onSubmit={handleFormSubmit} />
 ```
-
-**Options:**
-
-```json
-["error", { "attrs": ["data-testid", "data-cy"] }]
-```
-
-| Option  | Type       | Default                                                             | Description                                         |
-|---------|------------|---------------------------------------------------------------------|-----------------------------------------------------|
-| `attrs` | `string[]` | `["data-testid", "data-test", "data-test-id", "data-cy", "data-e2e"]` | List of JSX attribute names considered test-only  |
 
 ---
 
-### `react-bem-naming`
+#### 6. `strict-eg-rulez/react-bem-naming`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
 
-Enforces BEM naming methodology for React component class names, with strict checking for camelCase, kebab-case, or nested parent component names (`strict` mode).
+Enforces strict BEM (Block Element Modifier) CSS class naming conventions inside React components, validating class names from CSS Modules or string literals.
 
-- Supports `kebab-case`, `camelCase`, and `strict` modes.
-- Strict mode forces `block` names to match the parent React component.
-- Flags structural bad BEM practices (e.g. `___` or nesting elements like `block__el1__el2`).
+##### ⚙️ Options
+```ts
+interface ReactBemNamingOptions {
+  mode?: 'kebab-case' | 'camelCase' | 'strict'; // Default: 'kebab-case'
+}
+```
 
+##### ❌ Incorrect
 ```tsx
-// ✅ Valid (strict mode)
-const SortableHeaderCell = () => <th className={styles.sortableHeaderCell__content--active} />;
-
-// ❌ Invalid (strict mode: root doesn't match component)
-const SortableHeaderCell = () => <th className={styles.table__th} />;
+// Mode: 'strict' in component UserCard
+<div className={styles.user_card__header___title} /> // ❌ Invalid BEM syntax
+<div className={styles.navBar__item} />              // ❌ Block does not match component name
 ```
 
-**Options:**
-
-```json
-["error", { "mode": "strict" }]
+##### ✅ Correct
+```tsx
+// Mode: 'strict' in component UserCard
+<div className={styles.userCard} />
+<div className={styles.userCard__header} />
+<div className={styles.userCard__header__button} />
+<div className={styles.userCard__header__button$active} />
 ```
-
-| Option | Type                                     | Default        | Description                                               |
-|--------|------------------------------------------|----------------|-----------------------------------------------------------|
-| `mode` | `"kebab-case" \| "camelCase" \| "strict"` | `"kebab-case"` | The naming convention required for BEM blocks/elements   |
 
 ---
 
-### `react-component-layout`
+#### 7. `strict-eg-rulez/react-component-props-naming-check`
+> **Category:** 🏷️ `naming` | **Recommended:** `error`
 
-Enforces a specific declaration order inside React components. Based on Separation of Concerns (SoC) and MVVM principles. Supports **auto-fix** (`--fix`).
+Enforces that React component prop types strictly follow the `{ComponentName}Props` naming convention (e.g., `ButtonProps` for `Button`, `UserProfileProps` for `UserProfile`). Supports standard functions, arrow functions, `React.FC<T>`, `React.memo`, and `React.forwardRef`.
 
-**Required order:**
-
-| Group | Category             | Examples                                        |
-|-------|----------------------|-------------------------------------------------|
-| 0     | Props Destructuring  | `const { id, name } = props`                    |
-| 1     | Priority Hooks       | `useLocation`, `useNavigate`, `useTranslation`  |
-| 2     | Context Hooks        | `useThemeContext`, `useAuthContext`              |
-| 3     | State Hooks          | `useState`, `useReducer`, `watch`               |
-| 4     | Query/Mutation Hooks | `useQuery`, `useMutation`                       |
-| 5     | Custom Hooks         | `useForm`, `useDebounce`                        |
-| 6     | Effect Hooks         | `useEffect`, `useMemo`, `useCallback`           |
-| 7     | Utility Functions    | `const getLabel = () => ...`                    |
-| 8     | Event Handlers       | `const handleClick = () => ...`                 |
-| 9     | View Values          | `const title = isLoading ? '...' : name`        |
-| 10    | Early Returns        | `if (!data) return null`                        |
-| 11    | JSX Return           | `return <div>...</div>`                         |
-
-- **Dependency values** (group `-1`) are transparent — they can appear anywhere without triggering order violations.
-- Groups **3** (State), **7** (Utility), and **8** (Handler) must be **contiguous** within themselves.
-- Groups **9** (View Values) and **10** (Early Returns) may be freely swapped with each other.
-
-> This rule accepts no configuration options.
-
----
-
-### `test-statement-match`
-
-Enforces naming conventions for `it` and `test` blocks in test files (`.test.*`, `.spec.*`, `__tests__/`).
-
-- `it(...)` descriptions must start with `"should "`
-- `test(...)` descriptions must contain a conjunction (`if`, `when`, `while`, etc.)
-
+##### ⚙️ Options
 ```ts
-// ✅ Valid
-it('should render the button', () => { ... });
-test('returns null when data is empty', () => { ... });
-
-// ❌ Invalid
-it('renders the button', () => { ... });           // Missing 'should'
-test('returns null for empty data', () => { ... }); // No conjunction
+interface ReactComponentPropsNamingOptions {
+  suffix?: string;             // Expected suffix (Default: 'Props')
+  allowGenericProps?: boolean; // Permits generic 'Props' or 'TProps' (Default: false)
+  ignoreComponents?: string[]; // Component names to exempt
+  ignorePatterns?: string[];   // Glob patterns to ignore
+}
 ```
 
-**Options:**
-
-```json
-["error", {
-  "conjunctions": ["if", "when", "while", "after", "before"],
-  "ignoreTestPatterns": [".*\\.e2e\\.ts$"]
-}]
+##### ❌ Incorrect
+```tsx
+interface ButtonData { label: string; }
+export const Button = (props: ButtonData) => <button>{props.label}</button>; // ❌ Should be ButtonProps
 ```
 
-| Option               | Type       | Default                                                    | Description                                 |
-|----------------------|------------|------------------------------------------------------------|---------------------------------------------|
-| `conjunctions`       | `string[]` | `["if", "when", "while", "after", "before", "with", ...]` | Valid conjunctions list                     |
-| `ignoreTestPatterns` | `string[]` | `[]`                                                       | File patterns (regex) to exclude from check |
+##### ✅ Correct
+```tsx
+interface ButtonProps { label: string; }
+export const Button = (props: ButtonProps) => <button>{props.label}</button>;
+
+interface CardProps { title: string; }
+export const Card = React.memo((props: PropsWithChildren<CardProps>) => <div>{props.children}</div>);
+```
 
 ---
 
-### `util-hook-single-export`
+### 🏗️ Architecture Rules
 
-Enforces Single Responsibility for `utils/` and `hooks/` directories by ensuring that each file exports at most one function or custom hook. It prevents collector files (`*Utils.ts`, `helpers.ts`), forbids default exports (configurable), and checks filename matching.
+#### 8. `strict-eg-rulez/util-hook-colocation`
+> **Category:** 🏗️ `architecture` | **Recommended:** `error`
 
+Enforces Colocation boundaries for local component helpers. Utilities and hooks defined inside a component folder (e.g., `src/components/Account/utils/*`, `src/components/Account/hooks/*`) are private to that component subtree and **cannot be imported by sibling components or parent pages**.
+
+##### ⚙️ Options
 ```ts
-// ✅ Valid: /src/utils/date/formatDate.ts
-export const formatDate = (date: Date): string => { ... };
+interface UtilHookColocationOptions {
+  componentDirs?: string[];   // Container directories (Default: ['components', 'pages', 'views', 'modules', 'app', 'features', 'widgets'])
+  utilFolderNames?: string[]; // Helper folder names (Default: ['utils', 'hooks', 'helpers'])
+  ignorePatterns?: string[];  // Glob patterns to ignore
+}
+```
 
-// ✅ Valid: /src/utils/calculateBalance.ts (Unexported internal helpers are allowed)
-const getData = () => { ... };
-export const calculateBalance = () => { ... };
+##### ❌ Incorrect
+```ts
+// File: src/components/Dashboard/index.tsx (Sibling component)
+// ❌ Violates colocation boundary: importing private helper from AccountDetail
+import { formatAccount } from '../AccountDetail/utils/formatAccount';
+```
 
-// ❌ Invalid: Multiple exported functions in one file
-export const formatDate = (date: Date) => { ... };
-export const getDayDiff = (a: Date, b: Date) => { ... };
+##### ✅ Correct
+```ts
+// File: src/components/AccountDetail/SubSection/index.tsx (Child component)
+// ✅ Allowed: Sub-tree descendant of AccountDetail
+import { formatAccount } from '../utils/formatAccount';
 
-// ❌ Invalid: Collector file name
+// File: src/components/Dashboard/index.tsx
+// ✅ Allowed: Shared global utility
+import { formatAccount } from '@/utils/formatAccount';
+```
+
+---
+
+#### 9. `strict-eg-rulez/react-component-layout`
+> **Category:** 🏗️ `architecture` | **Recommended:** `error` | 🔧 **Auto-fixable**
+
+Enforces a chronological declaration layout inside React Components based on Separation of Concerns (SoC) and MVVM architecture. Ensures hooks, state, handlers, and view variables are cleanly organized.
+
+**Chronological Layout Sequence:**
+1. **Priority Navigation/I18n Hooks** (`useLocation`, `useNavigate`, `useTranslation`)
+2. **Context Hooks** (`useAuthContext`, `useThemeContext`)
+3. **State Hooks** (`useState`, `useReducer`, `watch`)
+4. **Query & Mutation Hooks** (`useQuery`, `useMutation`)
+5. **Custom Hooks** (`useDebounce`, `useForm`)
+6. **Side-Effect & Memoization Hooks** (`useEffect`, `useMemo`, `useCallback`)
+7. **Utility Functions** (`const calculateSummary = () => ...`)
+8. **Event / Action Handlers** (`const handleSubmit = () => ...`)
+9. **View Values & Derived State** (`const isSubmitDisabled = ...`)
+10. **Early Returns / Guards** (`if (isLoading) return <Spinner />;`)
+11. **JSX Render Return** (`return <Layout>...</Layout>;`)
+
+##### ⚙️ Options
+```ts
+interface ReactComponentLayoutOptions {
+  allowUnorderedHooks?: boolean; // If true, allows all hooks to be ordered freely among themselves (Default: false)
+  ignorePatterns?: string[];      // Glob patterns to ignore
+}
+```
+
+##### ❌ Incorrect
+```tsx
+export function Profile() {
+  const [name, setName] = useState('');
+  
+  // ❌ Side-effect declared before state/query hooks
+  useEffect(() => { load(); }, []);
+
+  const location = useLocation(); // ❌ Priority hook declared too late
+  const { data } = useQuery();
+  
+  return <div>{name}</div>;
+}
+```
+
+##### ✅ Correct (Auto-fixable via `eslint --fix`)
+```tsx
+export function Profile() {
+  const location = useLocation();
+  const [name, setName] = useState('');
+  const { data } = useQuery();
+
+  useEffect(() => { load(); }, []);
+
+  const handleNameChange = (e) => setName(e.target.value);
+  const isComplete = name.length > 0;
+
+  return <div>{name}</div>;
+}
+```
+
+---
+
+#### 10. `strict-eg-rulez/no-upstream-imports`
+> **Category:** 🏗️ `architecture` | **Recommended:** `error`
+
+Enforces strict Architectural Layer Boundaries. Foundational shared layers (`utils`, `hooks`, `types`, `services`, `apis`) must **never import from higher-level UI layers** (`components`, `pages`, `views`, `app`).
+
+##### ⚙️ Options
+```ts
+interface NoUpstreamImportsOptions {
+  sharedLayers?: string[];     // Default: ['utils', 'hooks', 'types', 'constants', 'services', 'apis', 'helpers']
+  uiLayers?: string[];         // Default: ['components', 'pages', 'views', 'app', 'features', 'widgets']
+  allowTypeImports?: boolean;  // If true, permits `import type` from UI layers (Default: false)
+  ignorePatterns?: string[];   // Glob patterns to ignore
+}
+```
+
+##### ❌ Incorrect
+```ts
+// File: src/utils/formatUser.ts (Shared Layer)
+// ❌ Upstream Import Violation: Shared util cannot import UI component
+import { UserAvatar } from '@/components/UserAvatar';
+```
+
+##### ✅ Correct
+```ts
+// File: src/components/UserProfile.tsx (UI Layer)
+// ✅ Allowed: UI layer imports foundational utility
+import { formatUser } from '@/utils/formatUser';
+```
+
+---
+
+### 💎 Quality Rules
+
+#### 11. `strict-eg-rulez/util-hook-single-export`
+> **Category:** 💎 `quality` | **Recommended:** `error`
+
+Enforces Single Responsibility Principle (SRP) for utility and hook files. Prevents messy collector files (`utils.ts`, `helpers.ts`) by requiring that each file exports **at most one primary function or custom hook**.
+- Filename must match the exported function name (`formatDate.ts` -> `export function formatDate`).
+- Non-callable constants (`export const DEFAULT_LOCALE = 'en';`) and TypeScript types (`export type DateFormat = ...`) are permitted alongside the primary function.
+
+##### ⚙️ Options
+```ts
+interface UtilHookSingleExportOptions {
+  maxExports?: number;            // Max exported functions allowed per file (Default: 1)
+  allowDefaultExport?: boolean;   // Forbid default exports in util files (Default: false)
+  allowTypeExports?: boolean;     // Permit exporting types/interfaces (Default: true)
+  allowConstants?: boolean;       // Permit exporting constants/configs (Default: true)
+  enforceFileNameMatch?: boolean; // Require function name to match file name (Default: true)
+  ignoreFiles?: string[];         // Glob patterns to ignore
+}
+```
+
+##### ❌ Incorrect
+```ts
 // File: src/utils/dateUtils.ts
-export const formatDate = (date: Date) => { ... };
-
-// ❌ Invalid: Default exports forbidden by default
-export default function calculateBalance() { ... }
+// ❌ Multiple functions exported in one file + collector file name
+export const formatDate = (d: Date) => d.toISOString();
+export const parseDate = (s: string) => new Date(s);
+export const getDayDiff = (a: Date, b: Date) => 0;
 ```
 
-**Options:**
-
-```json
-["error", {
-  "maxExports": 1,
-  "allowDefaultExport": false,
-  "allowTypeExports": true,
-  "enforceFileNameMatch": true
-}]
-```
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `maxExports` | `number` | `1` | Max exported value symbols allowed per file |
-| `allowDefaultExport` | `boolean` | `false` | Forbid default exports in util/hook files |
-| `allowTypeExports` | `boolean` | `true` | Allow type/interface exports alongside the function |
-| `enforceFileNameMatch` | `boolean` | `true` | Enforce that export name matches file name |
-
----
-
-### `util-hook-colocation`
-
-Enforces Colocation boundaries for local utils and hooks in component directories. Ensures private helpers in `components/X/utils/*` or `components/X/hooks/*` are not imported outside `components/X/`.
-
+##### ✅ Correct
 ```ts
-// ✅ Valid: /src/components/AccountDetail/index.tsx
-import { formatAccountNumber } from './utils/formatAccountNumber';
+// File: src/utils/date/formatDate.ts
+export type DateFormat = 'short' | 'long';
+export const DEFAULT_FORMAT = 'YYYY-MM-DD';
 
-// ✅ Valid: /src/components/AccountDetail/TransactionList/index.tsx (child component)
-import { formatAccountNumber } from '../utils/formatAccountNumber';
-
-// ❌ Invalid: /src/components/TransactionList/index.tsx (sibling component importing private util)
-import { formatAccountNumber } from '../AccountDetail/utils/formatAccountNumber';
-
-// ❌ Invalid: /src/pages/Dashboard/index.tsx (page importing private component hook)
-import { useAccountDetail } from '../../components/AccountDetail/hooks/useAccountDetail';
+// ✅ Exactly 1 exported callable function matching filename
+export function formatDate(d: Date, format: DateFormat = 'short'): string {
+  return d.toISOString();
+}
 ```
-
-**Options:**
-
-```json
-["error", {
-  "componentDirs": ["components", "pages", "views", "modules", "app", "features"],
-  "utilFolderNames": ["utils", "hooks"]
-}]
-```
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `componentDirs` | `string[]` | `["components", "pages", ...]` | Folder names considered component root containers |
-| `utilFolderNames` | `string[]` | `["utils", "hooks"]` | Subfolder names considered local helper directories |
 
 ---
 
-### `react-component-props-naming-check`
+#### 12. `strict-eg-rulez/no-deep-relative-imports`
+> **Category:** 💎 `quality` | **Recommended:** `warn`
 
-Enforces that props types passed to React components follow the `{ComponentName}Props` naming convention.
+Disallows deep relative imports (`../../../../`) that exceed a configured threshold. Enforces clean Path Aliases (e.g., `@/`) for better refactorability.
 
-- Applies to PascalCase functions that return JSX (`returnsJSX` check).
-- Supports standard functions, arrow functions, `React.memo`, and `React.forwardRef`.
-- Supports `PropsWithChildren<{ComponentName}Props>` wrappers and intersections (`{ComponentName}Props & React.HTMLAttributes<T>`).
-- Ignores components without props, untyped props, inline object types (`{ text: string }`), hook functions (`use*`), render helpers (`render*`), non-JSX functions, test files, and `apis/` files.
+##### ⚙️ Options
+```ts
+interface NoDeepRelativeImportsOptions {
+  maxDepth?: number;         // Max allowed parent levels (Default: 2)
+  suggestedAlias?: string;   // Recommended alias in error message (Default: '@/')
+  ignorePatterns?: string[]; // Glob patterns to ignore
+}
+```
 
+##### ❌ Incorrect
+```ts
+// ❌ Exceeds maxDepth (traverses 4 levels up)
+import { useAuth } from '../../../../hooks/useAuth';
+```
+
+##### ✅ Correct
+```ts
+// ✅ Uses path alias
+import { useAuth } from '@/hooks/useAuth';
+
+// ✅ Relative import within allowed depth (<= 2)
+import { SubComponent } from './SubComponent';
+import { helper } from '../utils/helper';
+```
+
+---
+
+### ⚛️ React Rules
+
+#### 13. `strict-eg-rulez/react-export-single-component-check`
+> **Category:** ⚛️ `react` | **Recommended:** `error`
+
+Enforces that each React component file (`.tsx`) exports **at most one React component**. Multi-component files create hidden coupling and hinder tree-shaking.
+- Supports `compound: true` option to allow Compound Sub-Components (e.g. `CardHeader`, `CardBody` in `Card.tsx`).
+- Automatically ignores barrel files (`index.tsx`), application roots (`main.tsx`, `App.tsx`), stories (`*.stories.tsx`), and tests (`*.test.tsx`).
+
+##### ⚙️ Options
+```ts
+interface ReactExportSingleComponentOptions {
+  compound?: boolean;        // Allow compound components starting with main component name (Default: false)
+  ignorePatterns?: string[]; // Glob patterns to ignore
+}
+```
+
+##### ❌ Incorrect
 ```tsx
-// ✅ Valid
-interface LoginProps { username: string }
-function Login(props: LoginProps) { return <form>{props.username}</form>; }
-
-interface CardProps { title: string }
-const Card = (props: PropsWithChildren<CardProps>) => <div>{props.children}</div>;
-
-const Header = () => <header>Site Header</header>;
-
-// ❌ Invalid
-interface LoginData { username: string }
-function Login(props: LoginData) { return <form>{props.username}</form>; } // should be LoginProps
-
-interface ButtonSettings { label: string }
-const ActionButton = (props: ButtonSettings) => <button>{props.label}</button>; // should be ActionButtonProps
+// File: src/components/Buttons.tsx
+// ❌ Multiple unrelated components exported from a single file
+export function PrimaryButton() { return <button className="primary" />; }
+export function SecondaryButton() { return <button className="secondary" />; }
 ```
 
----
-
-### `react-export-single-component-check`
-
-Enforces that each React component file (`.tsx`) exports at most one React component. Exporting multiple components from the same file violates Single Responsibility and hinders component organization.
-
-- Checks `export function`, `export const` (arrow function, `React.memo`, `React.forwardRef`, `React.lazy`), and local `export { LocalComp }`.
-- Automatically ignores barrel files (`index.tsx`), app entry points (`main.tsx`, `App.tsx`), test files (`*.test.tsx`, `*.spec.tsx`, `__tests__/`), storybook files (`*.stories.tsx`), and non-TSX files (`.ts`, `.js`).
-- Allows single component with helper `camelCase` functions, custom hooks (`use*`), types/interfaces, enums, and constants.
-- Supports the Compound Component pattern where subcomponents are attached to the parent without being separately exported (`Accordion.Item = AccordionItem`).
-
+##### ✅ Correct
 ```tsx
-// ✅ Valid
-export function Button({ label }: ButtonProps) {
-  return <button>{label}</button>;
+// File: src/components/Button.tsx
+export function Button({ variant }: ButtonProps) {
+  return <button className={variant} />;
 }
 
-// ✅ Valid (compound component pattern)
-export function Accordion({ children }: AccordionProps) {
-  return <div>{children}</div>;
-}
-function AccordionItem({ label }: ItemProps) {
-  return <li>{label}</li>;
-}
-Accordion.Item = AccordionItem;
-
-// ❌ Invalid — multiple function components exported
-export function PrimaryButton({ label }: { label: string }) {
-  return <button className="primary">{label}</button>;
-}
-export function SecondaryButton({ label }: { label: string }) {
-  return <button className="secondary">{label}</button>;
-}
-
-// ❌ Invalid — arrow function exported as second component
-export function Card() { return <div className="card" />; }
-export const CardFooter = () => <footer />;
+// File: src/components/Card.tsx (with compound: true)
+export function Card({ children }: CardProps) { return <div className="card">{children}</div>; }
+export function CardHeader({ title }: CardHeaderProps) { return <h3>{title}</h3>; }
+export function CardBody({ children }: CardBodyProps) { return <div>{children}</div>; }
 ```
-
-> This rule accepts no configuration options.
 
 ---
 
-### `no-upstream-imports`
+#### 14. `strict-eg-rulez/no-unused-deps-in-hooks`
+> **Category:** ⚛️ `react` | **Recommended:** `error` | 🔧 **Auto-fixable**
 
-**Category:** 🏗️ `Architecture`
+Detects over-specified dependency arrays in React hooks (`useEffect`, `useMemo`, `useCallback`, `useLayoutEffect`). If a dependency is declared in the array but never referenced in the hook body, it is flagged and automatically removed via `--fix`.
 
-Prevents shared foundational layers (`src/utils`, `src/hooks`, `src/types`, `src/services`, `src/apis`) from importing from higher-level UI layers (`src/components`, `src/pages`, `src/views`, `src/app`).
+##### ❌ Incorrect
+```tsx
+useEffect(() => {
+  console.log(title);
+  // ❌ 'count' and 'userId' are never used inside effect body
+}, [title, count, userId]);
+```
 
+##### ✅ Correct (Auto-fixable via `eslint --fix`)
+```tsx
+useEffect(() => {
+  console.log(title);
+}, [title]);
+```
+
+---
+
+### 🧪 Testing Rules
+
+#### 15. `strict-eg-rulez/test-statement-match`
+> **Category:** 🧪 `testing` | **Recommended:** `error`
+
+Enforces clear, BDD-style phrasing in test assertions:
+- `it(...)` descriptions must begin with `"should "` (e.g., `it('should render correctly')`).
+- `test(...)` descriptions must contain a condition/conjunction (`when`, `if`, `while`, `after`, `before`, `with`).
+
+##### ⚙️ Options
 ```ts
-// ❌ Invalid — shared util importing UI component
-import { UserCard } from '@/components/UserCard';
-
-// ❌ Invalid — shared hook importing Page
-import { Dashboard } from '@/pages/Dashboard';
-
-// ✅ Valid — UI component importing shared util
-import { formatDate } from '@/utils/formatDate';
-
-// ✅ Valid — shared hook importing shared util
-import { formatDate } from '@/utils/formatDate';
+interface TestStatementMatchOptions {
+  conjunctions?: string[];       // Conjunction words for test() (Default: ['if', 'when', 'while', 'after', ...])
+  ignoreTestPatterns?: string[]; // Regex patterns to exclude from check
+}
 ```
 
-**Options:**
-
-```json
-[
-  "error",
-  {
-    "sharedLayers": ["utils", "hooks", "types", "constants", "services", "apis", "helpers"],
-    "uiLayers": ["components", "pages", "views", "app", "features", "widgets"],
-    "allowTypeImports": false
-  }
-]
-```
-
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `sharedLayers` | `string[]` | `['utils', 'hooks', 'types', 'constants', 'services', 'apis', 'helpers']` | Folder names considered foundational shared layers. |
-| `uiLayers` | `string[]` | `['components', 'pages', 'views', 'app', 'features', 'widgets']` | Folder names considered higher UI layers. |
-| `allowTypeImports` | `boolean` | `false` | When true, permits `import type` statements from UI layers. |
-
----
-
-### `no-deep-relative-imports`
-
-**Category:** 💎 `Quality`
-
-Disallows deep relative directory traversals (`../../../`) exceeding a maximum allowed depth and enforces path aliases (`@/`) instead.
-
+##### ❌ Incorrect
 ```ts
-// ❌ Invalid — 3 levels up with default maxDepth 2
-import { formatDate } from '../../../utils/formatDate';
-
-// ❌ Invalid — 4 levels up
-import { useUser } from '../../../../hooks/useUser';
-
-// ✅ Valid — within maxDepth (<= 2)
-import { format } from '../../utils/format';
-
-// ✅ Valid — path alias
-import { formatDate } from '@/utils/formatDate';
+it('renders the header correctly', () => {}); // ❌ Missing 'should'
+test('user login flow', () => {});            // ❌ Missing condition conjunction
 ```
 
-**Options:**
-
-```json
-[
-  "warn",
-  {
-    "maxDepth": 2,
-    "suggestedAlias": "@/"
-  }
-]
+##### ✅ Correct
+```ts
+it('should render the header correctly', () => {});
+test('should authenticate user when credentials are valid', () => {});
 ```
-
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `maxDepth` | `number` | `2` | Maximum allowed `..` levels in relative imports. |
-| `suggestedAlias` | `string` | `"@/"` | Path alias prefix recommended in error messages. |
 
 ---
 
-## Development
+#### 16. `strict-eg-rulez/no-test-attrs`
+> **Category:** 🧪 `testing` | **Recommended:** `error`
 
-### Requirements
+Disallows test-specific QA attributes (`data-testid`, `data-test`, `data-cy`, `data-e2e`) from leaking into production component source code. Test files (`*.test.tsx`, `*.spec.tsx`, `__tests__/`) are automatically allowed.
 
-- Node.js 18+
-- npm
+##### ⚙️ Options
+```ts
+interface NoTestAttrsOptions {
+  attrs?: string[]; // Attributes considered test-only (Default: ['data-testid', 'data-test', 'data-test-id', 'data-cy', 'data-e2e'])
+}
+```
 
-### Setup
+##### ❌ Incorrect
+```tsx
+// File: src/components/Button.tsx (Production source)
+// ❌ Test attribute leaked into production JSX
+<button data-testid="submit-button" type="submit">Submit</button>
+```
+
+##### ✅ Correct
+```tsx
+// File: src/components/Button.tsx
+<button className="btn-submit" type="submit">Submit</button>
+
+// File: src/components/Button.test.tsx (Test file)
+// ✅ Allowed in test files
+<button data-testid="submit-button">Submit</button>
+```
+
+---
+
+## 🛠️ Development & Contributing
 
 ```bash
-# Install dependencies
+# Clone and install dependencies
+git clone https://github.com/your-org/eslint-eg-rules.git
+cd eslint-eg-rules
 npm install
 
-# Build
-npm run build
-
-# Run tests
+# Run unit tests (Vitest)
 npm test
 
-# Watch mode
-npm test -- --watch
-```
-
-### Project Structure
-
-```
-eslint-eg-rules/
-├── src/
-│   ├── index.ts                     # Plugin entry point; exports rules and configs
-│   ├── rules/
-│   │   ├── api-type-suffix/
-│   │   │   ├── index.ts             # Rule implementation
-│   │   │   └── index.test.ts        # Tests
-│   │   ├── boolean-prop-naming/
-│   │   ├── component-callback-naming/
-│   │   ├── functions-naming/
-│   │   ├── jsx-event-handler-naming/
-│   │   ├── no-test-attrs/
-│   │   ├── react-component-layout/
-│   │   └── test-statement-match/
-│   └── utils/
-│       └── react-events.ts          # Shared event map definitions
-├── demo/                            # Vite + React 18 + TypeScript demo project
-├── dist/                            # Build output (not committed)
-├── package.json
-└── tsconfig.json
-```
-
----
-
-## Demo Project
-
-The `demo/` directory is a Vite + React 18 + TypeScript project configured to use only this plugin.
-
-```bash
-# Build the plugin first (from root)
+# Build TypeScript output
 npm run build
-
-# Install demo dependencies
-cd demo && npm install
-
-# Run demo dev server
-npm run dev
-
-# Run lint check in demo
-npm run lint
 ```
-
-> The demo project's ESLint config is independent from the root project's config.
 
 ---
 
-## Adding a New Rule
+## 📄 License
 
-1. Create a new folder under `src/rules/`:
-   ```
-   src/rules/my-new-rule/
-   ├── index.ts       # Rule implementation
-   └── index.test.ts  # Tests
-   ```
-
-2. Implement the rule using `@typescript-eslint/utils`:
-   ```ts
-   import { TSESLint } from '@typescript-eslint/utils';
-
-   const rule: TSESLint.RuleModule<'myMessage', []> = {
-     meta: {
-       type: 'suggestion',
-       docs: { description: 'Rule description' },
-       messages: { myMessage: 'Error message' },
-       schema: [],
-     },
-     defaultOptions: [],
-     create(context) {
-       return {
-         Identifier(node) {
-           // ...
-         },
-       };
-     },
-   };
-
-   export default rule;
-   ```
-
-3. Register it in `src/index.ts`:
-   ```ts
-   import myNewRule from './rules/my-new-rule';
-
-   export const rules = {
-     // ...existing rules
-     'my-new-rule': myNewRule,
-   };
-
-   export const configs = {
-     recommended: {
-       rules: {
-         // ...
-         'strict-eg-rulez/my-new-rule': 'error',
-       },
-     },
-   };
-   ```
-
-4. Build and test:
-   ```bash
-   npm run build
-   cd demo && npm run lint
-   ```
+ISC © Emre Gürler

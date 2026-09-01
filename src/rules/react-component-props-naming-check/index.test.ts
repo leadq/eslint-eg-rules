@@ -105,6 +105,39 @@ ruleTester.run('react-component-props-naming-check', rule, {
       `,
       filename: '/src/components/Wrapper.tsx',
     },
+    // 9b. Custom suffix option (e.g. PropsType)
+    {
+      code: `
+        interface LoginPropsType { username: string }
+        function Login(props: LoginPropsType) {
+          return <form>{props.username}</form>;
+        }
+      `,
+      filename: '/src/components/Login.tsx',
+      options: [{ suffix: 'PropsType' }],
+    },
+    // 9c. allowGenericProps option (allows Props)
+    {
+      code: `
+        interface Props { username: string }
+        function Login(props: Props) {
+          return <form>{props.username}</form>;
+        }
+      `,
+      filename: '/src/components/Login.tsx',
+      options: [{ allowGenericProps: true }],
+    },
+    // 9d. ignoreComponents option
+    {
+      code: `
+        interface LegacyData { id: number }
+        function ThirdPartyAdapter(props: LegacyData) {
+          return <div>{props.id}</div>;
+        }
+      `,
+      filename: '/src/components/ThirdPartyAdapter.tsx',
+      options: [{ ignoreComponents: ['ThirdPartyAdapter'] }],
+    },
     // 10. ButtonHTMLAttributes
     {
       code: `

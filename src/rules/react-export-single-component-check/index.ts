@@ -1,75 +1,32 @@
 import { AST_NODE_TYPES, TSESLint, TSESTree } from '@typescript-eslint/utils';
 import * as path from 'path';
+import {
+  isPascalCase,
+  isFunctionOrCallable,
+  matchesIgnorePattern,
+} from '../../utils/ast-helpers';
 
 type MessageIds = 'singleComponentExport';
-type Options = [];
 
-function isPascalCase(name: string): boolean {
-  return /^[A-Z][a-zA-Z0-9]*$/.test(name);
+export interface ReactExportSingleComponentOptions {
+  compound?: boolean;
+  ignorePatterns?: string[];
 }
 
-function unwrapExpression(node: TSESTree.Node | null | undefined): TSESTree.Node | null | undefined {
-  let current = node;
-  while (current) {
-    if (
-      current.type === AST_NODE_TYPES.TSAsExpression ||
-      current.type === AST_NODE_TYPES.TSTypeAssertion ||
-      current.type === AST_NODE_TYPES.TSNonNullExpression ||
-      (current as any).type === 'TSSatisfiesExpression' ||
-      (current as any).type === 'ParenthesizedExpression'
-    ) {
-      current = (current as any).expression;
-    } else {
-      break;
-    }
-  }
-  return current;
-}
+type Options = [ReactExportSingleComponentOptions?];
 
-function isComponentWrapperCall(node: TSESTree.Node): boolean {
-  const unwrapped = unwrapExpression(node);
-  if (!unwrapped || unwrapped.type !== AST_NODE_TYPES.CallExpression) return false;
-  const callee = unwrapExpression(unwrapped.callee);
-  if (!callee) return false;
+const DEFAULT_OPTIONS: Required<ReactExportSingleComponentOptions> = {
+  compound: false,
+  ignorePatterns: [
+    '**/*.stories.*',
+    '**/*.story.*',
+    '**/*.test.*',
+    '**/*.spec.*',
+    '**/__tests__/**',
+  ],
+};
 
-  // React.memo, React.forwardRef, React.lazy
-  if (
-    callee.type === AST_NODE_TYPES.MemberExpression &&
-    callee.object.type === AST_NODE_TYPES.Identifier &&
-    callee.object.name === 'React' &&
-    callee.property.type === AST_NODE_TYPES.Identifier &&
-    ['memo', 'forwardRef', 'lazy'].includes(callee.property.name)
-  ) {
-    return true;
-  }
-
-  // memo, forwardRef, lazy
-  if (
-    callee.type === AST_NODE_TYPES.Identifier &&
-    ['memo', 'forwardRef', 'lazy'].includes(callee.name)
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-function isFunctionOrComponent(node: TSESTree.Node | null | undefined): boolean {
-  const unwrapped = unwrapExpression(node);
-  if (!unwrapped) return false;
-  if (
-    unwrapped.type === AST_NODE_TYPES.ArrowFunctionExpression ||
-    unwrapped.type === AST_NODE_TYPES.FunctionExpression
-  ) {
-    return true;
-  }
-  if (isComponentWrapperCall(unwrapped)) {
-    return true;
-  }
-  return false;
-}
-
-function isIgnoredFile(filename: string): boolean {
+function isIgnoredFile(filename: string, ignorePatterns: string[]): boolean {
   const normalized = filename.replace(/\\/g, '/');
   if (!normalized.toLowerCase().endsWith('.tsx')) {
     return true;
@@ -90,26 +47,49 @@ function isIgnoredFile(filename: string): boolean {
     return true;
   }
 
-  return false;
+  return matchesIgnorePattern(normalized, ignorePatterns);
 }
 
 const rule: TSESLint.RuleModule<MessageIds, Options> = {
-  defaultOptions: [],
+  defaultOptions: [{}],
   meta: {
     type: 'problem',
     docs: {
       description: 'Enforce that each component file exports at most one React component.',
-    },
-    schema: [],
+      recommended: true,
+    } as any,
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          compound: {
+            type: 'boolean',
+            description: 'If true, allows exporting compound subcomponents that share the primary component name prefix (e.g. Card and CardHeader).',
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Glob patterns for files to ignore.',
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       singleComponentExport:
         "Only one component can be exported per component file. '{{componentName}}' is exported in excess.",
     },
   },
   create(context) {
+    const customOptions = context.options[0] || {};
+    const options: Required<ReactExportSingleComponentOptions> = {
+      ...DEFAULT_OPTIONS,
+      ...customOptions,
+    };
+
     const filename = context.filename ?? context.getFilename();
     if (filename && filename !== '<input>' && filename !== '<text>') {
-      if (isIgnoredFile(filename)) {
+      if (isIgnoredFile(filename, options.ignorePatterns)) {
         return {};
       }
     }
@@ -143,19 +123,17 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
 
       VariableDeclarator(node) {
         if (node.id.type === AST_NODE_TYPES.Identifier && isPascalCase(node.id.name)) {
-          if (isFunctionOrComponent(node.init)) {
+          if (isFunctionOrCallable(node.init)) {
             localComponentDeclarations.set(node.id.name, node);
           }
         }
       },
 
       ExportNamedDeclaration(node) {
-        // External re-exports: export { X } from './other' are ignored
         if (node.source) {
           return;
         }
 
-        // Type-only exports: export type { ... } are ignored
         if (node.exportKind === 'type') {
           return;
         }
@@ -163,46 +141,30 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
         if (node.declaration) {
           const decl = node.declaration;
 
-          // Type alias, interface, and enum declarations are ignored
-          if (
-            decl.type === AST_NODE_TYPES.TSTypeAliasDeclaration ||
-            decl.type === AST_NODE_TYPES.TSInterfaceDeclaration ||
-            decl.type === AST_NODE_TYPES.TSEnumDeclaration
-          ) {
-            return;
-          }
-
-          // export function MyComponent() {}
           if (decl.type === AST_NODE_TYPES.FunctionDeclaration && decl.id) {
             if (isPascalCase(decl.id.name)) {
               directExportedComponents.push({
                 name: decl.id.name,
-                node: decl.id,
+                node: decl,
               });
             }
-          }
-
-          // export class MyComponent extends React.Component {}
-          if (decl.type === AST_NODE_TYPES.ClassDeclaration && decl.id) {
+          } else if (decl.type === AST_NODE_TYPES.ClassDeclaration && decl.id) {
             if (isPascalCase(decl.id.name)) {
               directExportedComponents.push({
                 name: decl.id.name,
-                node: decl.id,
+                node: decl,
               });
             }
-          }
-
-          // export const MyComponent = () => {}
-          if (decl.type === AST_NODE_TYPES.VariableDeclaration) {
+          } else if (decl.type === AST_NODE_TYPES.VariableDeclaration) {
             for (const declarator of decl.declarations) {
               if (
                 declarator.id.type === AST_NODE_TYPES.Identifier &&
                 isPascalCase(declarator.id.name)
               ) {
-                if (isFunctionOrComponent(declarator.init)) {
+                if (isFunctionOrCallable(declarator.init)) {
                   directExportedComponents.push({
                     name: declarator.id.name,
-                    node: declarator.id,
+                    node: declarator,
                   });
                 }
               }
@@ -210,13 +172,46 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           }
         }
 
-        // export { A, B }
         if (node.specifiers && node.specifiers.length > 0) {
           for (const specifier of node.specifiers) {
-            if (specifier.exportKind !== 'type') {
-              rawExportSpecifiers.push(specifier);
+            if (specifier.exportKind === 'type') {
+              continue;
             }
+            rawExportSpecifiers.push(specifier);
           }
+        }
+      },
+
+      ExportDefaultDeclaration(node) {
+        const decl = node.declaration;
+
+        if (
+          (decl.type === AST_NODE_TYPES.FunctionDeclaration ||
+            decl.type === AST_NODE_TYPES.ClassDeclaration) &&
+          decl.id
+        ) {
+          if (isPascalCase(decl.id.name)) {
+            directExportedComponents.push({
+              name: decl.id.name,
+              node: decl,
+            });
+          }
+        } else if (decl.type === AST_NODE_TYPES.Identifier) {
+          if (
+            isPascalCase(decl.name) &&
+            !importedNames.has(decl.name) &&
+            localComponentDeclarations.has(decl.name)
+          ) {
+            directExportedComponents.push({
+              name: decl.name,
+              node,
+            });
+          }
+        } else if (isFunctionOrCallable(decl)) {
+          directExportedComponents.push({
+            name: 'default',
+            node,
+          });
         }
       },
 
@@ -231,40 +226,53 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
             specifier.local.type === AST_NODE_TYPES.Identifier
               ? specifier.local.name
               : (specifier.local as any).value;
-          const exportedName =
-            specifier.exported.type === AST_NODE_TYPES.Identifier
-              ? specifier.exported.name
-              : (specifier.exported as any).value;
-
-          // If it's an imported identifier re-exported locally, skip it
-          if (importedNames.has(localName)) {
-            continue;
-          }
-
-          // If the local symbol is a recognized local component declaration or PascalCase component
-          if (localComponentDeclarations.has(localName) && isPascalCase(exportedName)) {
+          if (
+            localName &&
+            isPascalCase(localName) &&
+            !importedNames.has(localName) &&
+            localComponentDeclarations.has(localName)
+          ) {
             allExportedComponents.push({
-              name: exportedName,
+              name: localName,
               node: specifier,
             });
           }
         }
 
-        // Sort by AST range start position to maintain accurate export order in the file
-        allExportedComponents.sort((a, b) => a.node.range[0] - b.node.range[0]);
+        if (allExportedComponents.length <= 1) {
+          return;
+        }
 
-        if (allExportedComponents.length > 1) {
-          // The first component is valid; flag all subsequent exported components
-          for (let i = 1; i < allExportedComponents.length; i++) {
-            const extraComponent = allExportedComponents[i];
+        // When compound option is enabled, check if secondary exports are compound children of the primary component
+        if (options.compound) {
+          const primaryComponent = allExportedComponents[0];
+          const nonCompoundComponents = allExportedComponents.slice(1).filter((comp) => {
+            // A compound component starts with the primary component's name (e.g. CardHeader for Card)
+            return !comp.name.startsWith(primaryComponent.name);
+          });
+
+          for (const comp of nonCompoundComponents) {
             context.report({
-              node: extraComponent.node,
+              node: comp.node,
               messageId: 'singleComponentExport',
               data: {
-                componentName: extraComponent.name,
+                componentName: comp.name,
               },
             });
           }
+          return;
+        }
+
+        // Default strict behavior: report all components after the first
+        for (let i = 1; i < allExportedComponents.length; i++) {
+          const comp = allExportedComponents[i];
+          context.report({
+            node: comp.node,
+            messageId: 'singleComponentExport',
+            data: {
+              componentName: comp.name,
+            },
+          });
         }
       },
     };

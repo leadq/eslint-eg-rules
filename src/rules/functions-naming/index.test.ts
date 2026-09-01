@@ -48,7 +48,22 @@ ruleTester.run('functions-naming', rule, {
     `const useStore = () => ({});`,
 
     // Event handlers can be considered edge cases to ignore
-    `function onClick() { return true; }`,
+    `const onClick = () => 1;`,
+    `function handleSubmit() { return false; }`,
+
+    // Custom prefix options
+    {
+      code: `function formatDate() { return '2026-01-01'; }`,
+      options: [{ valuePrefixes: ['format'] }],
+    },
+    {
+      code: `function doesExist() { return true; }`,
+      options: [{ booleanPrefixes: ['does'] }],
+    },
+    {
+      code: `function customHelper() { return 123; }`,
+      options: [{ ignoreNames: ['customHelper'] }],
+    },
     `const handleFetch = () => ({});`,
 
     // Void or Undefined returns should be ignored

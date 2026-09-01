@@ -3,12 +3,14 @@ import {
   countRelativeParentDepth,
   extractImportFromNode,
 } from '../../utils/path-resolver';
+import { matchesIgnorePattern } from '../../utils/ast-helpers';
 
 type MessageIds = 'deepRelativeImport';
 
 export interface NoDeepRelativeImportsOptions {
   maxDepth?: number;
   suggestedAlias?: string;
+  ignorePatterns?: string[];
 }
 
 type Options = [NoDeepRelativeImportsOptions?];
@@ -16,6 +18,7 @@ type Options = [NoDeepRelativeImportsOptions?];
 const DEFAULT_OPTIONS: Required<NoDeepRelativeImportsOptions> = {
   maxDepth: 2,
   suggestedAlias: '@/',
+  ignorePatterns: ['**/*.test.*', '**/*.spec.*', '**/__tests__/**'],
 };
 
 const rule: TSESLint.RuleModule<MessageIds, Options> = {
@@ -33,9 +36,16 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           maxDepth: {
             type: 'integer',
             minimum: 1,
+            description: 'Maximum allowed directory traversal levels for relative imports.',
           },
           suggestedAlias: {
             type: 'string',
+            description: 'Suggested path alias to use instead (e.g. @/).',
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Glob patterns for files to ignore.',
           },
         },
         additionalProperties: false,
@@ -53,6 +63,13 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
       ...DEFAULT_OPTIONS,
       ...customOptions,
     };
+
+    const filename = context.filename ?? context.getFilename();
+    if (filename && filename !== '<input>' && filename !== '<text>') {
+      if (matchesIgnorePattern(filename, options.ignorePatterns)) {
+        return {};
+      }
+    }
 
     function checkNode(node: TSESTree.Node) {
       const extracted = extractImportFromNode(node);

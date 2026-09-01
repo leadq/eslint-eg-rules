@@ -1,5 +1,9 @@
 import { TSESLint, TSESTree, AST_NODE_TYPES } from '@typescript-eslint/utils';
 import * as path from 'path';
+import {
+  isConstantDeclaration,
+  matchesIgnorePattern,
+} from '../../utils/ast-helpers';
 
 type MessageIds =
   | 'multipleExports'
@@ -11,6 +15,7 @@ export interface UtilHookSingleExportOptions {
   maxExports?: number;
   allowDefaultExport?: boolean;
   allowTypeExports?: boolean;
+  allowConstants?: boolean;
   enforceFileNameMatch?: boolean;
   bannedFileNamePatterns?: string[];
   includePaths?: string[];
@@ -23,6 +28,7 @@ const DEFAULT_OPTIONS: Required<UtilHookSingleExportOptions> = {
   maxExports: 1,
   allowDefaultExport: false,
   allowTypeExports: true,
+  allowConstants: true,
   enforceFileNameMatch: true,
   bannedFileNamePatterns: [
     '*Utils.ts',
@@ -60,25 +66,6 @@ function normalizePath(filePath: string): string {
 function isUtilOrHookFile(filePath: string): boolean {
   const normalized = normalizePath(filePath);
   return /(^|\/)(utils|hooks)(\/|$)/.test(normalized);
-}
-
-function isIgnoredFile(filePath: string): boolean {
-  const normalized = normalizePath(filePath);
-  const baseName = path.basename(normalized);
-
-  if (/^index\.[jt]sx?$/.test(baseName)) {
-    return true;
-  }
-
-  if (/\.(test|spec)\.[jt]sx?$/.test(baseName)) {
-    return true;
-  }
-
-  if (normalized.includes('/__tests__/')) {
-    return true;
-  }
-
-  return false;
 }
 
 function matchesBannedPattern(baseName: string): { isBanned: boolean; suggestedFolder: string } {
@@ -132,7 +119,8 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     docs: {
       description:
         'Enforces Single Responsibility for utils and hooks: at most one exported function/hook per file, forbids collector files and default exports, and ensures file name matches export.',
-    },
+      recommended: true,
+    } as any,
     schema: [
       {
         type: 'object',
@@ -140,6 +128,7 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           maxExports: { type: 'number', minimum: 1 },
           allowDefaultExport: { type: 'boolean' },
           allowTypeExports: { type: 'boolean' },
+          allowConstants: { type: 'boolean' },
           enforceFileNameMatch: { type: 'boolean' },
           bannedFileNamePatterns: {
             type: 'array',
@@ -183,7 +172,7 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
 
     const normalizedPath = normalizePath(filename);
 
-    if (!isUtilOrHookFile(normalizedPath) || isIgnoredFile(normalizedPath)) {
+    if (!isUtilOrHookFile(normalizedPath) || matchesIgnorePattern(normalizedPath, options.ignoreFiles)) {
       return {};
     }
 
@@ -196,7 +185,6 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     }> = [];
 
     let defaultExportNode: TSESTree.ExportDefaultDeclaration | null = null;
-
     let hasBannedFileNameError = false;
 
     return {
@@ -258,6 +246,11 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
             });
           } else if (decl.type === AST_NODE_TYPES.VariableDeclaration) {
             for (const declarator of decl.declarations) {
+              // If it's a const declaration and allowConstants is true, and it's not a function, allow it without counting against maxExports
+              if (decl.kind === 'const' && options.allowConstants && isConstantDeclaration(declarator)) {
+                continue;
+              }
+
               const names = getExportedNamesFromPattern(declarator.id);
               for (const name of names) {
                 exportedItems.push({
@@ -304,7 +297,6 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
 
         if (totalCount > options.maxExports) {
           const names = exportedItems.map((item) => item.name).join(', ');
-          // Report on the first export node or the container
           const targetNode = exportedItems[0]?.node ?? defaultExportNode;
           if (targetNode) {
             context.report({
@@ -322,12 +314,12 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
 
         if (
           options.enforceFileNameMatch &&
-          !hasBannedFileNameError &&
           totalCount === 1 &&
-          !defaultExportNode
+          !hasBannedFileNameError &&
+          expectedExportName
         ) {
           const singleExport = exportedItems[0];
-          if (singleExport && singleExport.name !== expectedExportName) {
+          if (singleExport.name !== expectedExportName && singleExport.name !== 'default') {
             context.report({
               node: singleExport.node,
               messageId: 'fileNameMismatch',

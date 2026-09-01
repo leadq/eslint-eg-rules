@@ -1,29 +1,46 @@
-import { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { matchesIgnorePattern } from '../../utils/ast-helpers';
 
 type MessageIds = 'missingPrefix';
-type Options = [{ prefixes?: string[] }];
+
+export interface BooleanPropNamingOptions {
+  prefixes?: string[];
+  allowedPrefixes?: string[];
+  ignoreProps?: string[];
+  ignorePatterns?: string[];
+}
+
+type Options = [BooleanPropNamingOptions?];
 
 const defaultPrefixes = [
   'is',
-  'are',
-  'was',
-  'were',
   'has',
-  'have',
-  'had',
   'can',
-  'could',
   'should',
-  'would',
   'will',
   'did',
   'do',
   'does',
 ];
 
+const defaultIgnoreProps = [
+  'disabled',
+  'required',
+  'checked',
+  'readOnly',
+  'autoFocus',
+  'open',
+  'hidden',
+  'draggable',
+  'autoPlay',
+  'controls',
+  'loop',
+  'muted',
+  'multiple',
+  'selected',
+];
+
 function hasBooleanPrefix(name: string, prefixes: string[]): boolean {
-  // Allow "is", "isReady" but not "isolate" where the next character is not capitalized.
   return prefixes.some(
     (prefix) =>
       name === prefix ||
@@ -33,10 +50,10 @@ function hasBooleanPrefix(name: string, prefixes: string[]): boolean {
   );
 }
 
-function isBooleanType(typeNode: TSESTree.TypeNode): boolean {
+function isBooleanType(typeNode: TSESTree.TypeNode | undefined): boolean {
+  if (!typeNode) return false;
   if (typeNode.type === AST_NODE_TYPES.TSBooleanKeyword) return true;
   if (typeNode.type === AST_NODE_TYPES.TSUnionType) {
-    // True if at least one boolean type exists, and all types are boolean or nullable/optional
     const hasBoolean = typeNode.types.some(
       (t) =>
         t.type === AST_NODE_TYPES.TSBooleanKeyword ||
@@ -73,7 +90,8 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     docs: {
       description:
         'Enforce boolean prefix (is, has, can, etc.) for boolean props in components, hooks, and utils',
-    },
+      recommended: true,
+    } as any,
     messages: {
       missingPrefix:
         "Boolean property/parameter '{{name}}' should be prefixed with one of: {{prefixes}}.",
@@ -85,7 +103,18 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           prefixes: {
             type: 'array',
             items: { type: 'string' },
-            minItems: 1,
+          },
+          allowedPrefixes: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          ignoreProps: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
           },
         },
         additionalProperties: false,
@@ -96,16 +125,30 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     const filename = context.filename ?? context.getFilename();
     const isTargetFolder = /[\/\\](components|hooks|utils)[\/\\]/i.test(filename);
 
-    // Only apply in target folders
     if (!isTargetFolder) {
       return {};
     }
 
     const options = context.options[0] || {};
+    const ignorePatterns = options.ignorePatterns || ['**/*.test.*', '**/*.spec.*'];
+    if (matchesIgnorePattern(filename, ignorePatterns)) {
+      return {};
+    }
+
     const prefixes =
-      options.prefixes && options.prefixes.length > 0 ? options.prefixes : defaultPrefixes;
+      options.allowedPrefixes && options.allowedPrefixes.length > 0
+        ? options.allowedPrefixes
+        : options.prefixes && options.prefixes.length > 0
+        ? options.prefixes
+        : defaultPrefixes;
+
+    const ignoreProps = options.ignoreProps || defaultIgnoreProps;
 
     function checkName(node: TSESTree.Node, name: string) {
+      if (ignoreProps.includes(name)) {
+        return;
+      }
+
       if (!hasBooleanPrefix(name, prefixes)) {
         context.report({
           node,
@@ -159,6 +202,7 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           }
         }
       },
+
       PropertyDefinition(node) {
         if (!node.typeAnnotation && !node.value) return;
         let isBool = false;
@@ -176,6 +220,7 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           checkName(node.key, node.key.name);
         }
       },
+
       FunctionDeclaration: processFunctions,
       FunctionExpression: processFunctions,
       ArrowFunctionExpression: processFunctions,

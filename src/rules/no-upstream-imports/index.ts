@@ -6,6 +6,7 @@ import {
   getFileLayer,
   extractImportFromNode,
 } from '../../utils/path-resolver';
+import { matchesIgnorePattern } from '../../utils/ast-helpers';
 
 type MessageIds = 'upstreamImportViolation';
 
@@ -13,6 +14,7 @@ export interface NoUpstreamImportsOptions {
   sharedLayers?: string[];
   uiLayers?: string[];
   allowTypeImports?: boolean;
+  ignorePatterns?: string[];
 }
 
 type Options = [NoUpstreamImportsOptions?];
@@ -21,6 +23,7 @@ const DEFAULT_OPTIONS: Required<NoUpstreamImportsOptions> = {
   sharedLayers: ['utils', 'hooks', 'types', 'constants', 'services', 'apis', 'helpers'],
   uiLayers: ['components', 'pages', 'views', 'app', 'features', 'widgets'],
   allowTypeImports: false,
+  ignorePatterns: ['**/*.stories.*', '**/*.test.*', '**/*.spec.*'],
 };
 
 const rule: TSESLint.RuleModule<MessageIds, Options> = {
@@ -38,13 +41,21 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
           sharedLayers: {
             type: 'array',
             items: { type: 'string' },
+            description: 'List of foundational layers that must not import upstream.',
           },
           uiLayers: {
             type: 'array',
             items: { type: 'string' },
+            description: 'List of higher-level UI layers.',
           },
           allowTypeImports: {
             type: 'boolean',
+            description: 'If true, permits importing types from higher layers.',
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Glob patterns for files to ignore.',
           },
         },
         additionalProperties: false,
@@ -69,6 +80,10 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     }
 
     const normalizedCurrentFile = normalizePath(currentFilename);
+    if (matchesIgnorePattern(normalizedCurrentFile, options.ignorePatterns)) {
+      return {};
+    }
+
     const currentLayerInfo = getFileLayer(
       normalizedCurrentFile,
       options.sharedLayers,

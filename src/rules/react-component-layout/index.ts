@@ -1,26 +1,59 @@
 import { TSESLint } from '@typescript-eslint/utils';
 import { Node } from 'estree';
+import { matchesIgnorePattern } from '../../utils/ast-helpers';
 
-export const reactComponentLayoutRule: TSESLint.RuleModule<any, any> = {
+export interface ReactComponentLayoutOptions {
+  allowUnorderedHooks?: boolean;
+  ignorePatterns?: string[];
+}
+
+export const reactComponentLayoutRule: TSESLint.RuleModule<any, [ReactComponentLayoutOptions?]> = {
   meta: {
     type: 'layout',
     fixable: 'code',
     docs: {
       description:
         'Enforce chronological layout grouping inside React Components for better readability.',
-    },
+      recommended: true,
+    } as any,
     messages: {
       order:
         '[React Layout] Sequence Violation: "{{current_name}}" (Group: {{current_group}}) is declared after "{{prev_name}}" (Group: {{prev_group}}). -> FIX: Move "{{current_name}}" ABOVE "{{prev_name}}" to respect the correct chronological component layout sequence.',
       contiguous:
         '[React Layout] Contiguous Violation: All declarations of type "{{current_name}}" must be strictly grouped together. -> FIX: Move this statement so it sits directly adjacent to the other "{{current_name}}" declarations, closing the gap.',
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          allowUnorderedHooks: {
+            type: 'boolean',
+            description:
+              'If true, all hook invocations share the same grouping level and can appear in any order among themselves.',
+          },
+          ignorePatterns: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Glob patterns for files to ignore.',
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
   },
-  defaultOptions: [],
+  defaultOptions: [{}],
 
   create(context) {
     const sourceCode = context.sourceCode || context.getSourceCode();
+    const options = (context.options && context.options[0]) || {};
+    const ignorePatterns = options.ignorePatterns || ['**/*.test.*', '**/*.spec.*', '**/*.stories.*'];
+
+    const filename = context.filename ?? context.getFilename();
+    if (filename && filename !== '<input>' && filename !== '<text>') {
+      if (matchesIgnorePattern(filename, ignorePatterns)) {
+        return {};
+      }
+    }
 
     function getClosestFunction(node: any) {
       let curr = node.parent;
@@ -69,6 +102,20 @@ export const reactComponentLayoutRule: TSESLint.RuleModule<any, any> = {
     }
 
     function getHookGroup(hookName: string) {
+      if (options.allowUnorderedHooks) {
+        if (
+          /^(useLocation|useTranslation|useRouter|useNavigate)$/.test(hookName) ||
+          /Context$/.test(hookName) ||
+          /^(useState|useReducer|watch)$/.test(hookName) ||
+          /(Query|Mutation)$/.test(hookName) ||
+          hookName === 'useMutation' ||
+          /^(useMemo|useCallback|useEffect|useLayoutEffect|useImperativeHandle)$/.test(hookName) ||
+          hookName.startsWith('use')
+        ) {
+          return { group: 1, name: hookName };
+        }
+      }
+
       if (/^(useLocation|useTranslation|useRouter|useNavigate)$/.test(hookName))
         return { group: 1, name: hookName };
       if (/Context$/.test(hookName)) return { group: 2, name: hookName };
@@ -118,11 +165,7 @@ export const reactComponentLayoutRule: TSESLint.RuleModule<any, any> = {
         returnsJSX = hasJSXReturn(node.body);
       } else if (
         node.body &&
-        (node.body.type === 'JSXElement' ||
-          node.body.type === 'JSXFragment' ||
-          (node.body.type === 'ParenthesizedExpression' &&
-            (node.body.expression.type === 'JSXElement' ||
-              node.body.expression.type === 'JSXFragment')))
+        (node.body.type === 'JSXElement' || node.body.type === 'JSXFragment')
       ) {
         returnsJSX = true;
       }
