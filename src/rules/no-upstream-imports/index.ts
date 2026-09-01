@@ -3,23 +3,24 @@ import * as path from 'path';
 import {
   normalizePath,
   resolveImportPath,
-  extractComponentHelperContext,
-  isDescendantOrSelf,
+  getFileLayer,
   extractImportFromNode,
 } from '../../utils/path-resolver';
 
-type MessageIds = 'colocationViolation';
+type MessageIds = 'upstreamImportViolation';
 
-export interface UtilHookColocationOptions {
-  componentDirs?: string[];
-  utilFolderNames?: string[];
+export interface NoUpstreamImportsOptions {
+  sharedLayers?: string[];
+  uiLayers?: string[];
+  allowTypeImports?: boolean;
 }
 
-type Options = [UtilHookColocationOptions?];
+type Options = [NoUpstreamImportsOptions?];
 
-const DEFAULT_OPTIONS: Required<UtilHookColocationOptions> = {
-  componentDirs: ['components', 'pages', 'views', 'modules', 'app', 'features', 'widgets'],
-  utilFolderNames: ['utils', 'hooks', 'helpers'],
+const DEFAULT_OPTIONS: Required<NoUpstreamImportsOptions> = {
+  sharedLayers: ['utils', 'hooks', 'types', 'constants', 'services', 'apis', 'helpers'],
+  uiLayers: ['components', 'pages', 'views', 'app', 'features', 'widgets'],
+  allowTypeImports: false,
 };
 
 const rule: TSESLint.RuleModule<MessageIds, Options> = {
@@ -27,34 +28,37 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     type: 'problem',
     docs: {
       description:
-        'Enforces Colocation for local utils and hooks: helpers inside component directories must not be imported outside their component hierarchy.',
+        'Prevents shared foundational layers (utils, hooks, types, services, apis) from importing from higher-level UI layers (components, pages, views, app).',
       recommended: true,
     } as any,
     schema: [
       {
         type: 'object',
         properties: {
-          componentDirs: {
+          sharedLayers: {
             type: 'array',
             items: { type: 'string' },
           },
-          utilFolderNames: {
+          uiLayers: {
             type: 'array',
             items: { type: 'string' },
+          },
+          allowTypeImports: {
+            type: 'boolean',
           },
         },
         additionalProperties: false,
       },
     ],
     messages: {
-      colocationViolation:
-        "Local {{folderType}} '{{importedPath}}' belongs to '{{componentName}}' and cannot be imported from '{{importerPath}}'. Move it to the nearest common parent or 'src/{{folderType}}/'",
+      upstreamImportViolation:
+        "Shared layer '{{currentLayer}}' cannot import from UI layer '{{importedLayer}}' ('{{importedPath}}'). Move shared logic or models to a lower layer or pass them via arguments.",
     },
   },
   defaultOptions: [{}],
   create(context) {
     const customOptions = context.options[0] || {};
-    const options: Required<UtilHookColocationOptions> = {
+    const options: Required<NoUpstreamImportsOptions> = {
       ...DEFAULT_OPTIONS,
       ...customOptions,
     };
@@ -65,42 +69,46 @@ const rule: TSESLint.RuleModule<MessageIds, Options> = {
     }
 
     const normalizedCurrentFile = normalizePath(currentFilename);
+    const currentLayerInfo = getFileLayer(
+      normalizedCurrentFile,
+      options.sharedLayers,
+      options.uiLayers
+    );
+
+    // Only enforce when current file is inside a root shared layer (e.g. /src/utils/..., /src/hooks/...)
+    if (!currentLayerInfo || currentLayerInfo.type !== 'shared') {
+      return {};
+    }
+
+    const currentLayerName = currentLayerInfo.layer;
     const currentDir = path.posix.dirname(normalizedCurrentFile);
 
     function checkNode(node: TSESTree.Node) {
       const extracted = extractImportFromNode(node);
       if (!extracted) return;
 
-      const { source } = extracted;
+      const { source, isTypeOnly } = extracted;
+      if (isTypeOnly && options.allowTypeImports) return;
+
       const resolvedTarget = resolveImportPath(source, currentDir);
       if (!resolvedTarget) {
         return; // External package import
       }
 
-      const helperContext = extractComponentHelperContext(
+      const importedLayerInfo = getFileLayer(
         resolvedTarget,
-        options.componentDirs,
-        options.utilFolderNames
+        options.sharedLayers,
+        options.uiLayers
       );
 
-      if (!helperContext) {
-        return; // Not a component-scoped util/hook (e.g. global /src/utils or /src/hooks)
-      }
-
-      const { componentRoot, componentName, folderType } = helperContext;
-
-      // Check if the current file is inside the componentRoot or its descendants
-      const isAllowed = isDescendantOrSelf(normalizedCurrentFile, componentRoot);
-
-      if (!isAllowed) {
+      if (importedLayerInfo && importedLayerInfo.type === 'ui') {
         context.report({
           node: extracted.node,
-          messageId: 'colocationViolation',
+          messageId: 'upstreamImportViolation',
           data: {
-            folderType,
+            currentLayer: currentLayerName,
+            importedLayer: importedLayerInfo.layer,
             importedPath: source,
-            componentName,
-            importerPath: normalizedCurrentFile,
           },
         });
       }

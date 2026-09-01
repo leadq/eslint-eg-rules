@@ -6,6 +6,7 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
 
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Category Presets](#category-presets)
 - [Rules](#rules)
   - [api-type-suffix](#api-type-suffix)
   - [boolean-prop-naming](#boolean-prop-naming)
@@ -21,6 +22,8 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
   - [util-hook-colocation](#util-hook-colocation)
   - [react-component-props-naming-check](#react-component-props-naming-check)
   - [react-export-single-component-check](#react-export-single-component-check)
+  - [no-upstream-imports](#no-upstream-imports)
+  - [no-deep-relative-imports](#no-deep-relative-imports)
 - [Development](#development)
 - [Demo Project](#demo-project)
 - [Adding a New Rule](#adding-a-new-rule)
@@ -39,9 +42,25 @@ npm install eslint-plugin-strict-eg-rulez --save-dev
 
 ## Usage
 
-`.eslintrc.cjs` or `.eslintrc.json` (Legacy Config):
+### Flat Config (`eslint.config.mjs`):
 
-Using the recommended config:
+```js
+import strictEgRulez from 'eslint-plugin-strict-eg-rulez';
+
+export default [
+  // Recommended (All rules enabled)
+  strictEgRulez.configs['flat/recommended'],
+
+  // Or selectively enable specific categories:
+  // strictEgRulez.configs['flat/architecture'],
+  // strictEgRulez.configs['flat/quality'],
+  // strictEgRulez.configs['flat/naming'],
+  // strictEgRulez.configs['flat/react'],
+  // strictEgRulez.configs['flat/testing'],
+];
+```
+
+### Legacy Config (`.eslintrc.cjs`):
 
 ```json
 {
@@ -52,17 +71,17 @@ Using the recommended config:
 }
 ```
 
-Or configure rules individually:
+### Category Presets
 
-```json
-{
-  "plugins": ["strict-eg-rulez"],
-  "rules": {
-    "strict-eg-rulez/api-type-suffix": "error",
-    "strict-eg-rulez/boolean-prop-naming": "warn"
-  }
-}
-```
+| Preset | Category | Included Rules |
+| :--- | :--- | :--- |
+| `architecture` | 🏗️ Architecture | `util-hook-colocation`, `react-component-layout`, `no-upstream-imports` |
+| `quality` | 💎 Quality | `util-hook-single-export`, `no-deep-relative-imports` |
+| `naming` | 🏷️ Naming | `api-type-suffix`, `boolean-prop-naming`, `component-callback-naming`, `functions-naming`, `jsx-event-handler-naming`, `react-bem-naming`, `react-component-props-naming-check` |
+| `react` | ⚛️ React | `react-export-single-component-check`, `no-unused-deps-in-hooks` |
+| `testing` | 🧪 Testing | `test-statement-match`, `no-test-attrs` |
+| `recommended` | 🌟 All | All rules across all categories enabled. |
+
 
 ---
 
@@ -494,6 +513,86 @@ export const CardFooter = () => <footer />;
 ```
 
 > This rule accepts no configuration options.
+
+---
+
+### `no-upstream-imports`
+
+**Category:** 🏗️ `Architecture`
+
+Prevents shared foundational layers (`src/utils`, `src/hooks`, `src/types`, `src/services`, `src/apis`) from importing from higher-level UI layers (`src/components`, `src/pages`, `src/views`, `src/app`).
+
+```ts
+// ❌ Invalid — shared util importing UI component
+import { UserCard } from '@/components/UserCard';
+
+// ❌ Invalid — shared hook importing Page
+import { Dashboard } from '@/pages/Dashboard';
+
+// ✅ Valid — UI component importing shared util
+import { formatDate } from '@/utils/formatDate';
+
+// ✅ Valid — shared hook importing shared util
+import { formatDate } from '@/utils/formatDate';
+```
+
+**Options:**
+
+```json
+[
+  "error",
+  {
+    "sharedLayers": ["utils", "hooks", "types", "constants", "services", "apis", "helpers"],
+    "uiLayers": ["components", "pages", "views", "app", "features", "widgets"],
+    "allowTypeImports": false
+  }
+]
+```
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `sharedLayers` | `string[]` | `['utils', 'hooks', 'types', 'constants', 'services', 'apis', 'helpers']` | Folder names considered foundational shared layers. |
+| `uiLayers` | `string[]` | `['components', 'pages', 'views', 'app', 'features', 'widgets']` | Folder names considered higher UI layers. |
+| `allowTypeImports` | `boolean` | `false` | When true, permits `import type` statements from UI layers. |
+
+---
+
+### `no-deep-relative-imports`
+
+**Category:** 💎 `Quality`
+
+Disallows deep relative directory traversals (`../../../`) exceeding a maximum allowed depth and enforces path aliases (`@/`) instead.
+
+```ts
+// ❌ Invalid — 3 levels up with default maxDepth 2
+import { formatDate } from '../../../utils/formatDate';
+
+// ❌ Invalid — 4 levels up
+import { useUser } from '../../../../hooks/useUser';
+
+// ✅ Valid — within maxDepth (<= 2)
+import { format } from '../../utils/format';
+
+// ✅ Valid — path alias
+import { formatDate } from '@/utils/formatDate';
+```
+
+**Options:**
+
+```json
+[
+  "warn",
+  {
+    "maxDepth": 2,
+    "suggestedAlias": "@/"
+  }
+]
+```
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `maxDepth` | `number` | `2` | Maximum allowed `..` levels in relative imports. |
+| `suggestedAlias` | `string` | `"@/"` | Path alias prefix recommended in error messages. |
 
 ---
 

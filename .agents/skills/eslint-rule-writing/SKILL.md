@@ -14,99 +14,95 @@ When you are asked to create, refactor, or test an ESLint rule in this project, 
   - `index.ts` / `index.js`: The rule implementation itself.
   - `index.test.ts` / `index.test.js`: ESLint `RuleTester` unit tests.
   - `README.md`: Documentation for the rule.
+- **Rule Taxonomy & Categories**: Every rule MUST belong to one of these 6 official categories:
+  1. 📁 **`structure`**: File/folder anatomy, allowed folder files, and skeleton patterns (e.g., `apis/` folder anatomy).
+  2. 🏗️ **`architecture`**: Dependency graph, layer boundaries, colocation boundaries, component layout.
+  3. 🏷️ **`naming`**: Semantic naming for props, variables, functions, types, event handlers, and BEM.
+  4. 💎 **`quality`**: Maintainability, Single Responsibility (SRP), complexity control, guard clauses, parameter limits.
+  5. ⚛️ **`react`**: React lifecycle, hooks correctness, render safety, single component exports.
+  6. 🧪 **`testing`**: Test statement matching, test description formatting, disallowing test attributes in UI.
 - **Plugin Entry Point**: `src/index.ts` is where all rules are exported and added to the plugin's `configs.recommended` or `rules` object.
 - **Demo Project**: Located in the `demo/` (or `src/demo/`) directory. It is a React 18+ and TypeScript project used to verify rules in a real-world environment. It relies on the built version of the plugin.
 
 ## 2. Step-by-Step Execution Plan
 
-### Step 1: AST Coverage Analysis
+### Step 1: AST Coverage Analysis & Representation Matrix
 
-Before writing any code, perform a thorough AST coverage review.
+Before writing any code, perform a thorough AST coverage review across all possible JavaScript and TypeScript syntax representations.
 
-#### 1a. Identify All Representations
+#### 1a. Functions & Callables Representation Matrix
+Check at minimum:
+* **Function Declarations**: `function foo() {}`, `async function foo() {}`, `function* foo() {}`, `async function* foo() {}`
+* **Function Expressions**: `const foo = function() {}`, named function expressions `const foo = function bar() {}`
+* **Arrow Functions**: `const foo = () => {}`, `const foo = async () => {}`, concise body `() => expression` vs block body `() => { return ... }`
+* **Method Definitions**: Object methods `{ foo() {} }`, class methods `class { foo() {} }`, getters `get foo() {}`, setters `set foo(v) {}`, generator methods `*foo() {}`, async methods `async foo() {}`, computed method names `[computedName]() {}`
+* **TypeScript Function Overloads**: Multiple overload signatures + single implementation body (`function foo(x: string): void; function foo(x: number): void; function foo(x: any) {}`)
+* **IIFE (Immediately Invoked Functions)**: `(function() {})()`, `(() => {})()`
+* **Constructors & Signatures**: `constructor() {}`, call/construct signatures in interfaces `interface Foo { (): void; new(): Foo; }`
 
-Determine every relevant JavaScript and TypeScript representation of the target concept. Check at minimum:
+#### 1b. Variables, Bindings & Assignment Matrix
+Check at minimum:
+* **Declarators**: `const`, `let`, `var`, multiple declarators in a single statement (`const a = 1, b = 2, c = 3;`)
+* **Destructuring Patterns**:
+  - Object destructuring: `const { a, b: alias, c = defaultVal, ...rest } = obj`
+  - Nested destructuring: `const { user: { profile: { name } } } = obj`
+  - Array destructuring: `const [first, , third, ...rest] = arr`
+  - Parameter list destructuring: `function foo({ a, b = 1 }: Props)`
+* **Assignment Expressions**: `a = b = c`, `[a, b] = [1, 2]`, `({ a, b } = obj)`, logical assignments (`a ||= b`, `a &&= b`, `a ??= b`), compound assignments (`a += 1`)
+* **Ambient Declarations**: `declare const foo: string;`, `declare function foo(): void;`
 
-* declarations
-* expressions
-* variable definitions
-* assignments
-* object members
-* class members
-* nested scopes
-* callbacks
-* computed, private and static members
-* destructuring
-* JSX/TSX forms
-* TypeScript-only syntax
+#### 1c. Classes & Object Literals Matrix
+Check at minimum:
+* **Class Forms**: Class declarations (`class Foo {}`, `export default class Foo {}`), Class expressions (`const Foo = class Bar {}`, anonymous `export default class {}`)
+* **Class Members**:
+  - Public fields: `prop = 1;`
+  - Private identifiers: `#privateField = 1;`, `#privateMethod() {}`
+  - Static members: `static prop = 1;`, `static #secret = 2;`, static initialization blocks `static { ... }`
+  - Getters & Setters: `get prop()`, `set prop(v)`
+  - TypeScript parameter properties: `constructor(public name: string, private readonly id: number) {}`
+  - TypeScript abstract members: `abstract class Foo { abstract bar(): void; }`
+  - Auto-accessors: `accessor prop = 1;`
+* **Object Literals**: Shorthand properties `{ a, b }`, key-value `{ a: 1 }`, computed property names `{ [computeKey()]: 1 }`, method definitions `{ method() {} }`, spread properties `{ ...defaults, custom: 1 }`, object getters/setters `{ get foo() {}, set foo(v) {} }`
 
-Do not assume semantically equivalent code has the same AST structure.
+#### 1d. Modules, Imports & Exports Matrix
+Check at minimum:
+* **Imports**:
+  - Static forms: Named `import { a, b as c }`, Default `import a`, Namespace `import * as a`, Side-effect `import './style'`, Mixed `import a, { b } from '...'`
+  - Type-only forms: Declaration level `import type { A }`, Inline specifiers `import { type A, B }`, Import attributes `import data from './data.json' with { type: 'json' }`
+  - Dynamic forms: `import('...')`, `await import('...')` (String literals and static `TemplateLiteral`)
+  - CommonJS / AMD: `const a = require('...')`, `require.resolve('...')`
+  - TypeScript specific: `import a = require('...')` (`TSImportEqualsDeclaration`)
+* **Exports**:
+  - Inline exports: `export const a = 1;`, `export function b() {}`, `export class C {}`
+  - Export clauses: `export { a, b as c }`, `export { a } from './mod'`, `export { default as a } from './mod'`
+  - Default exports: `export default a;`, `export default function() {}`, `export default class {}`
+  - Wildcard re-exports: `export * from './mod'`, `export * as ns from './mod'`
+  - Type-only exports: `export type { A }`, `export type * from './mod'`, `export { type A, B }`
+  - TypeScript specific: `export = a`, `export as namespace a`
 
-#### 1b. Check Module Boundaries
+#### 1e. JSX, TSX & React Composition Matrix
+Check at minimum:
+* **JSX Elements**: `<Component />`, `<Component>...</Component>`
+* **JSX Fragments**: `<>...</>`, `<React.Fragment key={k}>...</React.Fragment>`
+* **JSX Member Expressions**: `<UI.Button />`, `<styled.div />`, `<Namespace.Sub.Component />`
+* **JSX Attributes**: Named `prop="val"`, boolean shorthand `<Button disabled />`, spread attributes `<Button {...props} />`
+* **Wrappers & HOCs**: `React.memo(Comp)`, `React.forwardRef(Comp)`, `React.lazy(() => import(...))`, `withAuth(Comp)`, curried HOCs `connect(mapState)(Comp)`
+* **Render Logic**: Conditional ternary `{isLoading ? <Spinner /> : <Data />}`, short-circuit `{hasError && <ErrorView />}`
 
-Review all relevant module forms:
+#### 1f. TypeScript Type Space & Control Flow Matrix
+Check at minimum:
+* **Type Assertions**: `as const`, `as Type`, `<Type>val`, `satisfies Type`, non-null assertions `foo!.bar`
+* **Generics**: Type parameters on functions, classes, type aliases, interfaces (`function foo<T extends Base>(arg: T): T`)
+* **Scopes & Shadowing**: Variable shadowing in nested blocks/closures, `try-catch` scope variables (`catch (err)`), `for-of`/`for-in` loop heads (`for (const [k, v] of entries)`), switch-case lexical block scopes (`case 1: { const x = 1; }`), optional chaining (`a?.b?.()`)
 
-* default imports
-* named imports
-* aliased imports
-* namespace imports
-* type-only imports
-* local exports
-* default exports
-* aliased exports
-* re-exports
-* wildcard exports
-* CommonJS forms when supported
-
-Explicitly distinguish:
-
-* locally defined constructs
-* imported constructs
-* aliases
-* wrappers
-* re-exported constructs
-* declaration-only constructs
-
-#### 1c. Choose the Correct Analysis Layer
-
-Use ESLint and ESTree utilities for:
-
-* syntax structure
-* AST traversal
-* parent relationships
-* lexical scope
-* variables and references
-
-Use TypeScript parser services and the TypeChecker for:
-
-* resolved types
-* symbol identity
-* aliases
-* inferred types
-* overloads
-* generics
-* imported declarations
-* built-in versus user-defined types
-* semantic ownership
-
-Do not use string matching when symbol or type resolution is required.
-
-Do not use the TypeChecker when syntax-level analysis is sufficient.
-
-#### 1d. Create an Explicit Coverage Decision
-
+#### 1g. Create an Explicit Coverage Decision
 Before implementation, list the relevant patterns using:
 
 | Pattern | AST representation | Analysis layer | Check / Ignore / Ask |
 | ------- | ------------------ | -------------- | -------------------- |
 
 Every relevant pattern must receive an explicit decision.
-
 If expected behavior is unclear, ask the user instead of selecting behavior silently.
-
-#### 1e. Draft AST Targets
-
-Based on the coverage analysis above, identify which AST nodes need to be visited (e.g., `FunctionDeclaration`, `ArrowFunctionExpression`, `VariableDeclarator`, `JSXElement`, `CallExpression`, `Identifier`, etc.). Think about all definition types and expression types of the same target. Always account for multiple ways to write the same logic (e.g., standard functions vs. arrow functions).
 
 ### Step 2: Test-Driven Development (TDD)
 
@@ -129,7 +125,7 @@ Based on the coverage analysis above, identify which AST nodes need to be visite
 
 2. **Rule Skeleton**: Use standard ESLint boilerplate. Export an object containing `meta` and `create`.
 
-3. **Meta Object**: Define the `type` (problem, suggestion, layout), `docs` (description, category), `schema` (for rule options), and `messages` (for standardized, type-safe error reporting).
+3. **Meta Object**: Define the `type` (problem, suggestion, layout), `docs` (description, `category`: one of `'Structure' | 'Architecture' | 'Naming' | 'Quality' | 'React' | 'Testing'`, `recommended`), `schema` (for rule options), and `messages` (for standardized, type-safe error reporting).
 
 4. **AST Traversal**: In the `create` function, return an object mapping AST node types to handler functions.
 
@@ -137,20 +133,33 @@ Based on the coverage analysis above, identify which AST nodes need to be visite
 
 6. **Fixers (Optional but encouraged)**: If the rule is fixable, add `fixable: 'code'` to `meta` and provide a `fix` function in `context.report()` to automatically correct the code.
 
-### Step 4: Run Unit Tests & Validate Completeness
+### Step 4: Unit Testing & Universal Hardening Gate (MANDATORY)
 
-1. Run the local unit tests (e.g., via `npm test` or running the test file via IDE/test runner).
-2. If tests fail, analyze the AST and refine the selectors or logic until all tests pass. Do not move forward until the RuleTester tests are fully successful.
-3. **Validate completeness** — before completing the rule, verify:
-   * all relevant syntax forms were considered
-   * import and export variants were considered
-   * local, imported, aliased and re-exported constructs were distinguished
-   * TypeScript-only forms were considered
-   * syntax analysis and semantic analysis were not confused
-   * no node can be reported more than once
-   * ignored patterns have regression tests
-   * every checked pattern has valid and invalid tests
-   * unresolved product decisions were asked instead of assumed
+1. **Run Unit Tests**: Run local unit tests (`npm test`). All tests must pass cleanly.
+2. **Universal Hardening Gate (Checklist Audit)**:
+   Before marking any rule as complete, you **MUST** systematically audit the rule against all 4 dimensions from Step 1:
+
+   #### Dimension 1: AST & Syntax Representation Invariance
+   - [ ] **Functions**: Function declarations, function expressions, arrow functions, object methods, class methods, getters/setters, generators, TypeScript overloads, IIFEs.
+   - [ ] **Variables & Destructuring**: `const`/`let`/`var`, multiple declarators, object destructuring, array destructuring, nested destructuring, parameter destructuring, assignment expressions (`=`, `+=`, `||=`, `??=`).
+   - [ ] **Classes & Objects**: Class declarations/expressions, public fields, private `#fields`, static fields/methods/blocks, getters/setters, TS constructor parameter properties, object shorthands, computed property names, object spread.
+   - [ ] **Modules, Imports & Exports**: Named/default/namespace imports, side-effect imports, `import type` vs inline `type` specifiers, import attributes (`with { type: 'json' }`), dynamic `import()` (literals & static template literals), CommonJS `require('...')`, TS `import x = require('...')`, inline exports, export clauses, default exports, wildcard re-exports, `export type *`.
+   - [ ] **JSX / TSX & React Composition**: Elements, fragments (`<>`, `<React.Fragment>`), member expressions (`<UI.Button />`), boolean shorthand attributes, spread attributes (`{...props}`), wrappers (`React.memo`, `React.forwardRef`, `React.lazy`, HOCs, curried HOCs).
+   - [ ] **TypeScript Type Space & Scopes**: `as const`, `as Type`, `satisfies`, non-null assertion (`!`), generics, closures, variable shadowing, `catch (err)`, `for-of`/`for-in` loop heads, switch block scopes, optional chaining (`?.`).
+
+   #### Dimension 2: Path & Environment Normalization
+   - [ ] **Cross-Platform Parity**: Are paths normalized (`\` to `/`, Windows drive letters `C:/`) before any matching?
+   - [ ] **Coordinate System Normalization**: Are relative paths (`./`, `../`), root aliases (`@/`, `~/`), and scoped aliases (`@components/`, `@utils/`, `@hooks/`) normalized to a single root-relative format (e.g. `toRootRelativePath`) before comparisons?
+   - [ ] **Traversal Cleansing**: Are relative paths normalized (e.g. via `path.posix.normalize`) before calculating directory traversal depth?
+
+   #### Dimension 3: False Positive & Scope Invariants
+   - [ ] **Self / Descendant Safety**: Does a component/module importing its own private helpers or descendants cleanly pass without false positives?
+   - [ ] **Non-Target Isolation**: Are non-target files (test files, mock files, barrel `index.ts`, non-applicable layers) cleanly ignored?
+   - [ ] **Value vs Type Space**: When `allowTypeImports` or type-only operations are relevant, are types cleanly distinguished from values?
+
+   #### Dimension 4: Engine Compatibility & Taxonomy
+   - [ ] **ESLint v8/v9 Compatibility**: Zero deprecated context methods; hybrid fallbacks used (`context.sourceCode || context.getSourceCode()`).
+   - [ ] **Taxonomy Classification**: Is the rule assigned to exactly one of the 6 official categories (`structure`, `architecture`, `naming`, `quality`, `react`, `testing`) in its metadata, docs, and `src/index.ts` presets?
 
 ### Step 5: Integration & Registration
 

@@ -39,7 +39,7 @@ ruleTester.run('util-hook-colocation', rule, {
       code: `import { useAccountDetail } from '../../hooks/useAccountDetail';`,
       filename: '/src/components/AccountDetail/TransactionList/Item/index.tsx',
     },
-    // 5. Component importing from global src/utils
+    // 5. Component importing from global src/utils via alias
     {
       code: `import { formatDate } from '@/utils/date/formatDate';`,
       filename: '/src/components/AccountDetail/index.tsx',
@@ -49,7 +49,7 @@ ruleTester.run('util-hook-colocation', rule, {
       code: `import { formatDate } from '../../utils/date/formatDate';`,
       filename: '/src/components/AccountDetail/index.tsx',
     },
-    // 7. Component importing from global src/hooks
+    // 7. Component importing from global src/hooks via alias
     {
       code: `import { useDebounce } from '@/hooks/useDebounce';`,
       filename: '/src/components/AccountDetail/index.tsx',
@@ -63,6 +63,26 @@ ruleTester.run('util-hook-colocation', rule, {
     {
       code: `import { calculateSummary } from './utils/calculateSummary';`,
       filename: '/src/pages/Dashboard/index.tsx',
+    },
+    // 10. Type-only import from own local utils
+    {
+      code: `import type { AccountFormatOptions } from './utils/formatAccountNumber';`,
+      filename: '/src/components/AccountDetail/index.tsx',
+    },
+    // 11. Child component importing parent util via @/ alias (no false positive)
+    {
+      code: `import { formatAccountNumber } from '@/components/AccountDetail/utils/formatAccountNumber';`,
+      filename: '/src/components/AccountDetail/TransactionList/index.tsx',
+    },
+    // 12. Child component importing parent util via @components/ alias
+    {
+      code: `import { formatAccountNumber } from '@components/AccountDetail/utils/formatAccountNumber';`,
+      filename: '/src/components/AccountDetail/TransactionList/index.tsx',
+    },
+    // 13. Windows backslash path support
+    {
+      code: `import { formatAccountNumber } from './utils/formatAccountNumber';`,
+      filename: 'C:\\Users\\dev\\projects\\src\\components\\AccountDetail\\index.tsx',
     },
   ],
   invalid: [
@@ -114,9 +134,89 @@ ruleTester.run('util-hook-colocation', rule, {
         },
       ],
     },
-    // 4. Re-exporting from another component's local utils
+    // 4. Sibling component importing from another component's utils via @components alias
+    {
+      code: `import { formatAccountNumber } from '@components/AccountDetail/utils/formatAccountNumber';`,
+      filename: '/src/components/TransactionList/index.tsx',
+      errors: [
+        {
+          messageId: 'colocationViolation',
+          data: {
+            folderType: 'utils',
+            importedPath: '@components/AccountDetail/utils/formatAccountNumber',
+            componentName: 'AccountDetail',
+            importerPath: '/src/components/TransactionList/index.tsx',
+          },
+        },
+      ],
+    },
+    // 5. Re-exporting from another component's local utils
     {
       code: `export { formatAccountNumber } from '../AccountDetail/utils/formatAccountNumber';`,
+      filename: '/src/components/TransactionList/index.tsx',
+      errors: [
+        {
+          messageId: 'colocationViolation',
+          data: {
+            folderType: 'utils',
+            importedPath: '../AccountDetail/utils/formatAccountNumber',
+            componentName: 'AccountDetail',
+            importerPath: '/src/components/TransactionList/index.tsx',
+          },
+        },
+      ],
+    },
+    // 6. Dynamic import of another component's local hook
+    {
+      code: `const loadHook = () => import('../AccountDetail/hooks/useAccountDetail');`,
+      filename: '/src/components/TransactionList/index.tsx',
+      errors: [
+        {
+          messageId: 'colocationViolation',
+          data: {
+            folderType: 'hooks',
+            importedPath: '../AccountDetail/hooks/useAccountDetail',
+            componentName: 'AccountDetail',
+            importerPath: '/src/components/TransactionList/index.tsx',
+          },
+        },
+      ],
+    },
+    // 7. Dynamic import via template literal
+    {
+      code: 'const loadHook = () => import(`../AccountDetail/hooks/useAccountDetail`);',
+      filename: '/src/components/TransactionList/index.tsx',
+      errors: [
+        {
+          messageId: 'colocationViolation',
+          data: {
+            folderType: 'hooks',
+            importedPath: '../AccountDetail/hooks/useAccountDetail',
+            componentName: 'AccountDetail',
+            importerPath: '/src/components/TransactionList/index.tsx',
+          },
+        },
+      ],
+    },
+    // 8. CommonJS require of another component's local util
+    {
+      code: `const { formatAccountNumber } = require('../AccountDetail/utils/formatAccountNumber');`,
+      filename: '/src/components/TransactionList/index.tsx',
+      errors: [
+        {
+          messageId: 'colocationViolation',
+          data: {
+            folderType: 'utils',
+            importedPath: '../AccountDetail/utils/formatAccountNumber',
+            componentName: 'AccountDetail',
+            importerPath: '/src/components/TransactionList/index.tsx',
+          },
+        },
+      ],
+    },
+    // 9. TypeScript import equals declaration
+    {
+      code: `import format = require('../AccountDetail/utils/formatAccountNumber');`,
       filename: '/src/components/TransactionList/index.tsx',
       errors: [
         {

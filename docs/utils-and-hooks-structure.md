@@ -207,3 +207,17 @@ src/
 Aksi halde tek bir `dateUtils.ts` içine çok sayıda iş toplandığında, buna karşılık gelen unit test dosyası da tüm bu işlerin testini barındırmak zorunda kalır. Her fonksiyon için ortalama 8-10 test yazıldığı düşünülürse, test dosyası hızla büyür; hangi testin hangi fonksiyona ait olduğunu bulmak, dosyayı okumak ve bakımını yapmak zorlaşır; bir fonksiyondaki değişiklik ilgisiz onlarca testin arasında takip edilmesi güç hale gelir. Tek sorumluluk ilkesi, hem util/hook dosyalarını hem de onlara karşılık gelen test dosyalarını küçük, odaklı ve sürdürülebilir tutar.
 
 Ayrıca bu yapı, süreçlere giderek daha fazla dahil olan AI agent'ları açısından da context window kullanımını iyileştirir: bir agent ihtiyaç duyduğu fonksiyonu ararken çok daha küçük dosyalar okur ve 10 satırlık bir fonksiyon için 300 satırlık bir dosyanın tamamını context'e yüklemek gerekmez.
+
+---
+
+## 4. İlgili ESLint Kuralları ve Otomasyon
+
+Bu dokümanda tanımlanan ilkeler, `eslint-plugin-strict-eg-rulez` eklentisi içerisindeki kurallarla statik analiz seviyesinde otomatik olarak denetlenir:
+
+| Kural | Kategori | Denetlenen İlke |
+| :--- | :--- | :--- |
+| **`util-hook-colocation`** | 🏗️ Architecture | Local utils/hooks'un yalnızca kendi bileşen ağacında kullanılmasını zorunlu kılar; dışarıdan izinsiz erişimi engeller. |
+| **`no-upstream-imports`** | 🏗️ Architecture | Paylaşılan alt katmanların (`src/utils`, `src/hooks`) üst UI katmanlarından kod import etmesini yasaklar (Clean Layer Boundaries). |
+| **`util-hook-single-export`** | 💎 Quality | Her util/hook dosyasında en fazla bir ana export olmasını zorlar; collector dosyaları (`dateUtils.ts`) ve default export'u yasaklar. |
+| **`no-deep-relative-imports`** | 💎 Quality | `../../../` gibi derin tırmanışları engelleyip path alias (`@/`) kullanımını zorlar. |
+

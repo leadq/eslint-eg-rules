@@ -5,9 +5,21 @@ description: Custom ESLint plugin rules for React + TypeScript projects. These w
 
 # Coding Rules (eg-rules)
 
-This project uses `eslint-plugin-eg-rules`. Follow the rules below when writing code.
+This project uses `eslint-plugin-strict-eg-rulez`. All rules are strictly organized into 6 official categories:
+
+### Rule Taxonomy & Category Index
+
+| Category | Description | Rules in Plugin |
+| :--- | :--- | :--- |
+| 🏗️ **`architecture`** | Dependency directions, layer boundaries, colocation boundaries | • [`util-hook-colocation`](#11-util-hook-colocation--colocation-boundaries-for-component-helpers)<br>• [`react-component-layout`](#6-react-component-layout--component-declaration-order)<br>• [`no-upstream-imports`](#14-no-upstream-imports--architectural-layer-boundaries) |
+| 💎 **`quality`** | Maintainability, Single Responsibility (SRP), clean code | • [`util-hook-single-export`](#10-util-hook-single-export--single-responsibility-for-utils-and-hooks)<br>• [`no-deep-relative-imports`](#15-no-deep-relative-imports--disallow-deep-relative-imports) |
+| 🏷️ **`naming`** | Semantic naming conventions for props, functions, types, event handlers, BEM | • [`api-type-suffix`](#1-api-type-suffix--api-type-naming)<br>• [`boolean-prop-naming`](#2-boolean-prop-naming--boolean-prop-prefixes)<br>• [`component-callback-naming`](#3-component-callback-naming--callback-prop-prefix)<br>• [`functions-naming`](#4-functions-naming--function-return-based-naming)<br>• [`jsx-event-handler-naming`](#5-jsx-event-handler-naming--jsx-handler-naming)<br>• [`react-bem-naming`](#9-react-bem-naming--react-component-bem-classes)<br>• [`react-component-props-naming-check`](#12-react-component-props-naming-check--component-props-type-naming) |
+| ⚛️ **`react`** | React lifecycle, hooks correctness, single component exports | • [`react-export-single-component-check`](#13-react-export-single-component-check--single-component-export-per-file)<br>• [`no-unused-deps-in-hooks`](#10-no-unused-deps-in-hooks) |
+| 🧪 **`testing`** | Test statement matching, test description formatting, no test attributes in UI | • [`test-statement-match`](#7-test-statement-match--test-description-format)<br>• [`no-test-attrs`](#8-no-test-attrs--disallow-test-attributes) |
+| 📁 **`structure`** | File/folder anatomy, folder-level allowed files, naming patterns for files/directories | *(Ready for structure rules)* |
 
 ---
+
 
 ## 1. `api-type-suffix` — API Type Naming
 
@@ -305,12 +317,53 @@ export function SecondaryButton({ label }: { label: string }) {
 
 // ❌ (arrow function exported as second component)
 export function Card() { return <div className="card" />; }
-export const CardFooter = () => <footer />;
 ```
 
 ---
 
-## 14. ESLint v8 / v9 Compatibility Rules
+## 14. `no-upstream-imports` — Architectural Layer Boundaries
+
+**Category:** 🏗️ `architecture`
+
+Enforces clean layer direction: prevents shared foundational layers (`src/utils`, `src/hooks`, `src/types`, `src/services`, `src/apis`) from importing from higher-level UI layers (`src/components`, `src/pages`, `src/views`, `src/app`).
+
+```ts
+// ❌ (shared util importing UI component)
+import { UserCard } from '@/components/UserCard';
+
+// ❌ (shared hook importing page)
+import { Dashboard } from '@/pages/Dashboard';
+
+// ✅ (UI component importing shared util)
+import { formatDate } from '@/utils/formatDate';
+
+// ✅ (shared hook importing shared util)
+import { formatDate } from '@/utils/formatDate';
+```
+
+---
+
+## 15. `no-deep-relative-imports` — Disallow Deep Relative Imports
+
+**Category:** 💎 `quality`
+
+Disallows deep relative imports (`../../../`) exceeding the configured maximum depth (default: `2`) and encourages using path aliases (`@/`).
+
+```ts
+// ❌ (3 levels up with default maxDepth 2)
+import { formatDate } from '../../../utils/formatDate';
+
+// ❌ (4 levels up)
+import { useUser } from '../../../../hooks/useUser';
+
+// ✅ (2 levels up or path alias)
+import { format } from '../../utils/format';
+import { formatDate } from '@/utils/formatDate';
+```
+
+---
+
+## 16. ESLint v8 / v9 Compatibility Rules
 All rules developed or modified in this plugin must maintain native compatibility with both ESLint v8 and ESLint v9.
 
 ### Coding guidelines:

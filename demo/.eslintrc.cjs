@@ -26,6 +26,8 @@ module.exports = {
     'strict-eg-rulez/util-hook-colocation': 'error',
     'strict-eg-rulez/react-component-props-naming-check': 'error',
     'strict-eg-rulez/react-export-single-component-check': 'error',
+    'strict-eg-rulez/no-upstream-imports': 'error',
+    'strict-eg-rulez/no-deep-relative-imports': 'warn',
   },
   overrides: [
     {
