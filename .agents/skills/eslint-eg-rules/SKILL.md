@@ -39,15 +39,15 @@ interface UserRequestModel {}  // consecutive suffixes
 
 ## 2. `boolean-prop-naming` — Boolean Prop Prefixes
 
-In `components/`, `hooks/`, and `utils/`, boolean props and parameters must start with: `is`, `has`, `can`, `should`, `will`, `did`, `show`, or `hide`.
+In `components/`, `hooks/`, and `utils/`, boolean props and parameters must start with standard boolean prefixes: `is`, `are`, `has`, `have`, `can`, `should`, `will`, `did`, `do`, `does`.
 
 ```ts
 // ✅
-interface Props { isOpen: boolean; hasError?: boolean }
+interface Props { isOpen: boolean; hasError?: boolean; areColumnsDraggable?: boolean; haveAccess?: boolean }
 function useModal(isVisible: boolean) {}
 
 // ❌
-interface Props { open: boolean }
+interface Props { open: boolean; columnsDraggable: boolean }
 function useModal(visible: boolean) {}
 ```
 

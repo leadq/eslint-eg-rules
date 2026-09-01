@@ -36,7 +36,7 @@ export const rules = {
 
 export const meta = {
   name: 'eslint-plugin-strict-eg-rulez',
-  version: '3.1.0',
+  version: '3.1.1',
 };
 
 // Architecture Rules Category Config

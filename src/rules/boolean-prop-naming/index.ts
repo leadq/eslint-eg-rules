@@ -14,7 +14,9 @@ type Options = [BooleanPropNamingOptions?];
 
 const defaultPrefixes = [
   'is',
+  'are',
   'has',
+  'have',
   'can',
   'should',
   'will',

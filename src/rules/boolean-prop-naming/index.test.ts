@@ -69,6 +69,27 @@ ruleTester.run('boolean-prop-naming', rule, {
       `,
       filename: '/src/apis/request.ts',
     },
+    // Plural prefixes (are, have)
+    {
+      code: `
+        interface TableProps {
+          areColumnsDraggable: boolean;
+          areRowsDraggable?: boolean;
+          areItemsSelected: boolean | undefined;
+          haveAccess: boolean;
+          haveTokens?: boolean;
+        }
+      `,
+      filename: '/src/components/Table.tsx',
+    },
+    // Plural prefixes in hooks and utils
+    {
+      code: `
+        function useTable(areColumnsDraggable: boolean = true) {}
+        function checkAuth(havePermissions: boolean) {}
+      `,
+      filename: '/src/hooks/useTable.ts',
+    },
     // Custom option prefix
     {
       code: `
@@ -81,6 +102,33 @@ ruleTester.run('boolean-prop-naming', rule, {
     },
   ],
   invalid: [
+    {
+      code: `
+        interface TableProps {
+          columnsDraggable: boolean; // prefix missing
+        }
+      `,
+      filename: '/src/components/Table.tsx',
+      errors: [{ messageId: 'missingPrefix' }],
+    },
+    {
+      code: `
+        interface AreaProps {
+          arena: boolean; // starts with 'are' but lowercase next letter
+        }
+      `,
+      filename: '/src/components/Area.tsx',
+      errors: [{ messageId: 'missingPrefix' }],
+    },
+    {
+      code: `
+        interface HavenProps {
+          haven: boolean; // starts with 'have' but lowercase next letter
+        }
+      `,
+      filename: '/src/components/Haven.tsx',
+      errors: [{ messageId: 'missingPrefix' }],
+    },
     {
       code: `
         interface ButtonProps {

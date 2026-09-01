@@ -166,12 +166,12 @@ export interface UserResponse { success: boolean; data: UserModel; }
 #### 2. `strict-eg-rulez/boolean-prop-naming`
 > **Category:** 🏷️ `naming` | **Recommended:** `error`
 
-Enforces standard boolean prefixes (`is`, `has`, `can`, `should`, `will`, `did`, `do`, `does`) for boolean properties and parameters in components, hooks, and utilities. Prevents ambiguous identifiers like `valid` or `open`. Standard HTML boolean attributes (`disabled`, `required`, `checked`, `readOnly`, `open`, etc.) are automatically exempt.
+Enforces standard boolean prefixes (`is`, `are`, `has`, `have`, `can`, `should`, `will`, `did`, `do`, `does`) for boolean properties and parameters in components, hooks, and utilities (including plural forms like `areColumnsDraggable`, `haveAccess`). Prevents ambiguous identifiers like `valid` or `open`. Standard HTML boolean attributes (`disabled`, `required`, `checked`, `readOnly`, `open`, etc.) are automatically exempt.
 
 ##### ⚙️ Options
 ```ts
 interface BooleanPropNamingOptions {
-  allowedPrefixes?: string[]; // List of allowed prefixes (Default: ['is', 'has', 'can', 'should', 'will', 'did', 'do', 'does'])
+  allowedPrefixes?: string[]; // List of allowed prefixes (Default: ['is', 'are', 'has', 'have', 'can', 'should', 'will', 'did', 'do', 'does'])
   ignoreProps?: string[];     // Prop names exempt from checks (Default: HTML boolean attrs)
   ignorePatterns?: string[];  // Glob patterns to ignore (Default: ['**/*.test.*', '**/*.spec.*'])
 }
@@ -180,8 +180,9 @@ interface BooleanPropNamingOptions {
 ##### ❌ Incorrect
 ```ts
 interface ModalProps {
-  visible: boolean; // ❌ Should be isVisible or showModal
+  visible: boolean; // ❌ Should be isVisible
   error: boolean;   // ❌ Should be hasError
+  columnsDraggable: boolean; // ❌ Should be areColumnsDraggable
 }
 function useToggle(active: boolean = false) {} // ❌ Should be isActive
 ```
@@ -191,6 +192,7 @@ function useToggle(active: boolean = false) {} // ❌ Should be isActive
 interface ModalProps {
   isVisible: boolean;
   hasError: boolean;
+  areColumnsDraggable: boolean; // ✅ Allowed plural boolean prefix
   disabled: boolean; // ✅ Allowed (Standard HTML attribute)
 }
 function useToggle(isActive: boolean = false) {}
