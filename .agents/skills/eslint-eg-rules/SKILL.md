@@ -271,7 +271,46 @@ const ActionButton = (props: ButtonSettings) => <button>{props.label}</button>; 
 
 ---
 
-## 13. ESLint v8 / v9 Compatibility Rules
+## 13. `react-export-single-component-check` — Single Component Export per File
+
+Enforces that each React component file (`.tsx`) exports at most one React component. Multiple component exports violate Single Responsibility and hinder component organization.
+
+- Checks `export function`, `export const` (arrow function, `React.memo`, `React.forwardRef`, `React.lazy`), and local `export { LocalComp }`.
+- Automatically ignores barrel files (`index.tsx`), app entry points (`main.tsx`, `App.tsx`), test files (`*.test.tsx`, `*.spec.tsx`, `__tests__/`), storybook files (`*.stories.tsx`), and non-TSX files (`.ts`, `.js`).
+- Allows a single component with helper `camelCase` functions, custom hooks (`use*`), types/interfaces, enums, and constants.
+- Supports the Compound Component pattern where subcomponents are attached to the parent without being separately exported (`Accordion.Item = AccordionItem`).
+
+```tsx
+// ✅
+export function Button({ label }: ButtonProps) {
+  return <button>{label}</button>;
+}
+
+// ✅ (compound component pattern)
+export function Accordion({ children }: AccordionProps) {
+  return <div>{children}</div>;
+}
+function AccordionItem({ label }: ItemProps) {
+  return <li>{label}</li>;
+}
+Accordion.Item = AccordionItem;
+
+// ❌ (multiple function components exported)
+export function PrimaryButton({ label }: { label: string }) {
+  return <button className="primary">{label}</button>;
+}
+export function SecondaryButton({ label }: { label: string }) {
+  return <button className="secondary">{label}</button>;
+}
+
+// ❌ (arrow function exported as second component)
+export function Card() { return <div className="card" />; }
+export const CardFooter = () => <footer />;
+```
+
+---
+
+## 14. ESLint v8 / v9 Compatibility Rules
 All rules developed or modified in this plugin must maintain native compatibility with both ESLint v8 and ESLint v9.
 
 ### Coding guidelines:

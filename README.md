@@ -20,6 +20,7 @@ A collection of custom ESLint rules for React + TypeScript projects. Designed to
   - [util-hook-single-export](#util-hook-single-export)
   - [util-hook-colocation](#util-hook-colocation)
   - [react-component-props-naming-check](#react-component-props-naming-check)
+  - [react-export-single-component-check](#react-export-single-component-check)
 - [Development](#development)
 - [Demo Project](#demo-project)
 - [Adding a New Rule](#adding-a-new-rule)
@@ -452,6 +453,47 @@ function Login(props: LoginData) { return <form>{props.username}</form>; } // sh
 interface ButtonSettings { label: string }
 const ActionButton = (props: ButtonSettings) => <button>{props.label}</button>; // should be ActionButtonProps
 ```
+
+---
+
+### `react-export-single-component-check`
+
+Enforces that each React component file (`.tsx`) exports at most one React component. Exporting multiple components from the same file violates Single Responsibility and hinders component organization.
+
+- Checks `export function`, `export const` (arrow function, `React.memo`, `React.forwardRef`, `React.lazy`), and local `export { LocalComp }`.
+- Automatically ignores barrel files (`index.tsx`), app entry points (`main.tsx`, `App.tsx`), test files (`*.test.tsx`, `*.spec.tsx`, `__tests__/`), storybook files (`*.stories.tsx`), and non-TSX files (`.ts`, `.js`).
+- Allows single component with helper `camelCase` functions, custom hooks (`use*`), types/interfaces, enums, and constants.
+- Supports the Compound Component pattern where subcomponents are attached to the parent without being separately exported (`Accordion.Item = AccordionItem`).
+
+```tsx
+// ✅ Valid
+export function Button({ label }: ButtonProps) {
+  return <button>{label}</button>;
+}
+
+// ✅ Valid (compound component pattern)
+export function Accordion({ children }: AccordionProps) {
+  return <div>{children}</div>;
+}
+function AccordionItem({ label }: ItemProps) {
+  return <li>{label}</li>;
+}
+Accordion.Item = AccordionItem;
+
+// ❌ Invalid — multiple function components exported
+export function PrimaryButton({ label }: { label: string }) {
+  return <button className="primary">{label}</button>;
+}
+export function SecondaryButton({ label }: { label: string }) {
+  return <button className="secondary">{label}</button>;
+}
+
+// ❌ Invalid — arrow function exported as second component
+export function Card() { return <div className="card" />; }
+export const CardFooter = () => <footer />;
+```
+
+> This rule accepts no configuration options.
 
 ---
 

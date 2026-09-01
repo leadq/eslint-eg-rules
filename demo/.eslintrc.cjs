@@ -25,6 +25,7 @@ module.exports = {
     'strict-eg-rulez/util-hook-single-export': 'error',
     'strict-eg-rulez/util-hook-colocation': 'error',
     'strict-eg-rulez/react-component-props-naming-check': 'error',
+    'strict-eg-rulez/react-export-single-component-check': 'error',
   },
   overrides: [
     {

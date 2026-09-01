@@ -11,6 +11,7 @@ import noUnusedDepsInHooks from './rules/no-unused-deps-in-hooks';
 import utilHookSingleExport from './rules/util-hook-single-export';
 import utilHookColocation from './rules/util-hook-colocation';
 import reactComponentPropsNamingCheck from './rules/react-component-props-naming-check';
+import reactExportSingleComponentCheck from './rules/react-export-single-component-check';
 
 export const rules = {
   'api-type-suffix': apiTypeSuffix,
@@ -26,6 +27,7 @@ export const rules = {
   'util-hook-single-export': utilHookSingleExport,
   'util-hook-colocation': utilHookColocation,
   'react-component-props-naming-check': reactComponentPropsNamingCheck,
+  'react-export-single-component-check': reactExportSingleComponentCheck,
 };
 
 export const meta = {
@@ -49,6 +51,7 @@ const legacyRecommended = {
     'strict-eg-rulez/util-hook-single-export': 'error',
     'strict-eg-rulez/util-hook-colocation': 'error',
     'strict-eg-rulez/react-component-props-naming-check': 'error',
+    'strict-eg-rulez/react-export-single-component-check': 'error',
   },
 };
 

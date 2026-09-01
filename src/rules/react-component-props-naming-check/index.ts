@@ -49,6 +49,7 @@ function functionBodyReturnsJSX(body: TSESTree.Node | null | undefined): boolean
     }
 
     for (const key of Object.keys(node)) {
+      if (key === 'parent') continue;
       const child = (node as any)[key];
       if (child && typeof child === 'object') {
         if (Array.isArray(child)) {
